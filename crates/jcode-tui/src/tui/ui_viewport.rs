@@ -229,7 +229,7 @@ pub(crate) fn copy_badge_reserved_width(
         // Feedback text plus the spacer between it and the shortcut badges.
         // The separator before the feedback is already counted in
         // `copy_badge_shortcut_width`.
-        reserved = reserved.saturating_add(UnicodeWidthStr::width("✓ Copied! "));
+        reserved = reserved.saturating_add(UnicodeWidthStr::width("✓ 已复制！"));
     }
     reserved
 }

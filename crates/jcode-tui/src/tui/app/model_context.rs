@@ -553,14 +553,14 @@ impl App {
                     "✓ Switched to model: {}{}",
                     next_model, auth_suffix
                 )));
-                self.set_status_notice(format!("Model → {}", next_model));
+                self.set_status_notice(format!("模型 → {}", next_model));
             }
             Err(e) => {
                 self.push_display_message(DisplayMessage::error(format!(
                     "Failed to switch model: {}",
                     e
                 )));
-                self.set_status_notice("Model switch failed");
+                self.set_status_notice("模型切换失败");
             }
         }
     }
@@ -1344,7 +1344,7 @@ impl App {
                     .resets_at
                     .as_deref()
                     .map(crate::usage::format_reset_time)
-                    .map(|value| format!(" · resets in {}", value))
+                    .map(|value| format!(" · {} 后重置", value))
                     .unwrap_or_default();
                 lines.push(format!(
                     "  {:<width$}: {}{}",
@@ -1576,14 +1576,14 @@ pub(super) fn handle_model_command(app: &mut App, trimmed: &str) -> bool {
                     title: None,
                     tool_data: None,
                 });
-                app.set_status_notice(format!("Model → {}", model_name));
+                app.set_status_notice(format!("模型 → {}", model_name));
             }
             Err(e) => {
                 app.push_display_message(DisplayMessage::error(model_switch_failure_message(
                     &e.to_string(),
                     app.is_remote,
                 )));
-                app.set_status_notice("Model switch failed");
+                app.set_status_notice("模型切换失败");
             }
         }
         return true;

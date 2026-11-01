@@ -269,7 +269,7 @@ pub(super) fn handle_bus_event(
             if !app.auth_catalog_refresh_pending {
                 app.push_display_message(crate::tui::DisplayMessage::system(message));
             }
-            app.set_status_notice(format!("Model → {}", model));
+            app.set_status_notice(format!("模型 → {}", model));
             if open_picker {
                 app.open_model_picker();
             }

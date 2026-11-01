@@ -165,7 +165,7 @@ impl App {
             let status =
                 statuses.and_then(|statuses| statuses.iter().find(|status| status.id == provider));
             let label = match status.map(|status| status.state) {
-                Some(crate::auth::AuthState::Available) => "configured",
+                Some(crate::auth::AuthState::Available) => "已配置",
                 Some(crate::auth::AuthState::Expired) => "attention",
                 Some(crate::auth::AuthState::NotConfigured) => "setup",
                 None => "status unknown",

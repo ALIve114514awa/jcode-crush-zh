@@ -54,13 +54,14 @@ fn route_provider_display(provider: &str, api_method: &str) -> String {
 
 fn picker_entry_display_name(entry: &crate::tui::PickerEntry) -> String {
     let base = picker_entry_pretty_name(entry);
-    let default_marker = if entry.is_default { " default" } else { "" };
-    let is_new = entry
-        .options
-        .iter()
-        .any(|option| option.detail.contains("recently added"));
+    let default_marker = if entry.is_default { " 默认" } else { "" };
+    let is_new = entry.options.iter().any(|option| {
+        ["recently added", "最近新增"]
+            .iter()
+            .any(|label| option.detail.contains(label))
+    });
     let suffix = if is_new && !entry.is_current {
-        format!(" new{}", default_marker)
+        format!(" 新增{}", default_marker)
     } else if entry.is_favorite {
         format!(" ♥{}", default_marker)
     } else if entry.recommended {
@@ -69,7 +70,7 @@ fn picker_entry_display_name(entry: &crate::tui::PickerEntry) -> String {
         if let Some(ref date) = entry.created_date {
             format!(" {}{}", date, default_marker)
         } else {
-            format!(" old{}", default_marker)
+            format!(" 旧版{}", default_marker)
         }
     } else if let Some(ref date) = entry.created_date {
         if !entry.is_current {
@@ -128,9 +129,9 @@ fn route_detail_display_text(detail: &str, unavailable: bool) -> Option<String> 
     let trimmed = detail.trim();
     if unavailable {
         if trimmed.is_empty() {
-            Some("unavailable".to_string())
+            Some("不可用".to_string())
         } else {
-            Some(format!("unavailable · {}", trimmed))
+            Some(format!("不可用 · {}", trimmed))
         }
     } else if trimmed.is_empty() {
         None
@@ -147,6 +148,11 @@ fn route_detail_is_limited(detail: &str) -> bool {
         || lower.contains("requires an inference profile")
         || lower.contains("catalog still loading")
         || lower.contains("provider will initialize")
+        || lower.contains("回退模型")
+        || lower.contains("不支持工具")
+        || lower.contains("需要推理配置文件")
+        || lower.contains("模型列表仍在加载")
+        || lower.contains("即将初始化服务商")
 }
 
 fn selected_route_notice_text(
@@ -169,6 +175,7 @@ fn selected_route_notice_text(
         .detail
         .to_ascii_lowercase()
         .contains("inference profile")
+        || route.detail.contains("推理配置文件")
     {
         return Some((format!("ⓘ {}", detail), false));
     }
@@ -188,18 +195,10 @@ fn model_picker_top_hint(picker: &crate::tui::InlineInteractiveState) -> Option<
         });
     if let Some(global) = agent_models_scope(picker) {
         return Some(match (global, is_swarm_agent_model_picker) {
-            (true, false) => {
-                " GLOBAL DEFAULT: changes every session without its own choice · Ctrl+G this session instead"
-            }
-            (false, false) => {
-                " THIS SESSION ONLY: other sessions keep the global default · Ctrl+G global default"
-            }
-            (true, true) => {
-                " GLOBAL DEFAULT (all sessions) · Ctrl+G this session · swarm routing: /swarm-prompt"
-            }
-            (false, true) => {
-                " THIS SESSION ONLY · Ctrl+G global default · swarm routing: /swarm-prompt"
-            }
+            (true, false) => " 全局默认：应用于未单独设置的会话 · Ctrl+G 改为仅此会话",
+            (false, false) => " 仅此会话：其他会话使用全局默认 · Ctrl+G 修改全局默认",
+            (true, true) => " 全局默认（所有会话）· Ctrl+G 仅此会话 · 协作路由：/swarm-prompt",
+            (false, true) => " 仅此会话 · Ctrl+G 全局默认 · 协作路由：/swarm-prompt",
         });
     }
 
@@ -212,9 +211,7 @@ fn model_picker_top_hint(picker: &crate::tui::InlineInteractiveState) -> Option<
             .iter()
             .any(|entry| matches!(entry.action, crate::tui::PickerAction::Model));
     if is_runtime_model_picker {
-        Some(
-            " keys: Ctrl+O set default · Ctrl+N favorite · Shift+Tab switch active model to next favorite",
-        )
+        Some(" 快捷键：Ctrl+O 设为默认 · Ctrl+N 收藏 · Shift+Tab 切换收藏模型")
     } else {
         None
     }
@@ -297,8 +294,8 @@ fn picker_render_width(picker: &crate::tui::InlineInteractiveState, max_width: u
 
     if picker.uses_compact_navigation() {
         let show_provider_badge = account_picker_shows_provider_badge(picker);
-        let mut max_title_len = display_width("ACCOUNT");
-        let mut max_state_len = display_width("STATE");
+        let mut max_title_len = display_width("账户");
+        let mut max_state_len = display_width("状态");
 
         for &fi in &picker.filtered {
             let entry = &picker.entries[fi];
@@ -403,9 +400,9 @@ pub(super) fn model_suggestion_lines(
     let dim = Style::default().fg(dim_color());
     if picker.filtered.is_empty() {
         let message = if picker.filter.is_empty() {
-            "No matching models".to_string()
+            "没有匹配的模型".to_string()
         } else {
-            format!("No matching models for {}", picker.filter)
+            format!("没有匹配 {} 的模型", picker.filter)
         };
         return vec![Line::from(Span::styled(message, dim))];
     }
@@ -427,11 +424,7 @@ pub(super) fn model_suggestion_lines(
         let entry = &picker.entries[index];
         model_width = model_width.max(
             display_width(&picker_entry_display_name(entry))
-                + if entry.is_current {
-                    " current".len()
-                } else {
-                    0
-                },
+                + if entry.is_current { " 当前".len() } else { 0 },
         );
         if let Some(route) = entry.active_option() {
             provider_width = provider_width.max(display_width(&route_provider_display(
@@ -460,16 +453,12 @@ pub(super) fn model_suggestion_lines(
             style,
         )];
         if entry.is_current {
-            spans.push(Span::styled(" current", dim));
+            spans.push(Span::styled(" 当前", dim));
         }
         if let Some(route) = route {
             let route_style = if row == selected { style } else { dim };
             let name_width = display_width(&picker_entry_display_name(entry))
-                + if entry.is_current {
-                    " current".len()
-                } else {
-                    0
-                };
+                + if entry.is_current { " 当前".len() } else { 0 };
             spans.push(Span::raw(" ".repeat(model_width - name_width)));
             spans.push(Span::styled(
                 format!(
@@ -500,7 +489,7 @@ pub(super) fn model_suggestion_lines(
         }
         if row + 1 == start + visible && row + 1 < picker.filtered.len() {
             spans.push(Span::styled(
-                format!("  +{} more", picker.filtered.len() - row - 1),
+                format!("  另有 {} 项", picker.filtered.len() - row - 1),
                 dim,
             ));
         }
@@ -511,17 +500,17 @@ pub(super) fn model_suggestion_lines(
     }
     if hint_rows > 0 {
         let filter = if !picker.preview && !picker.filter.is_empty() {
-            format!("Filter: {} · ", picker.filter)
+            format!("筛选：{} · ", picker.filter)
         } else {
             String::new()
         };
         let navigation = if !picker.preview && picker.column > 0 {
-            "↑↓ route · ←→ column · Enter select · Esc cancel"
+            "↑↓ 路由 · ←→ 切换列 · Enter 选择 · Esc 取消"
         } else {
-            "↑↓ choose · Enter select · Esc cancel"
+            "↑↓ 选择 · Enter 确认 · Esc 取消"
         };
         let shortcuts = hint
-            .map(|hint| format!(" ·{}", hint.trim_start_matches(" keys:")))
+            .map(|hint| format!(" ·{}", hint.trim_start_matches(" 快捷键：")))
             .unwrap_or_default();
         lines.push(Line::from(Span::styled(
             format!("{filter}{navigation}{shortcuts}"),
@@ -560,8 +549,8 @@ pub(super) fn draw_inline_interactive(frame: &mut Frame, app: &dyn TuiState, are
         is_account_picker && account_picker_shows_provider_badge(picker);
     let mut max_provider_len = display_width(picker.secondary_label(is_preview));
     let mut max_via_len = display_width(picker.tertiary_label());
-    let mut max_account_title_len = display_width("ACCOUNT");
-    let mut max_account_state_len = display_width("STATE");
+    let mut max_account_title_len = display_width("账户");
+    let mut max_account_state_len = display_width("状态");
     for &fi in picker.filtered.iter().take(WIDTH_SCAN_LIMIT) {
         let entry = &picker.entries[fi];
         let route = entry.active_option();
@@ -731,7 +720,7 @@ pub(super) fn draw_inline_interactive(frame: &mut Frame, app: &dyn TuiState, are
         ));
         if picker.shows_default_shortcut_hint() {
             header_spans.push(Span::styled(
-                "  Ctrl-O=set default",
+                "  Ctrl-O=设为默认",
                 Style::default().fg(rgb(60, 60, 80)).italic(),
             ));
         }
@@ -766,7 +755,7 @@ pub(super) fn draw_inline_interactive(frame: &mut Frame, app: &dyn TuiState, are
 
     if picker.filtered.is_empty() {
         lines.push(Line::from(Span::styled(
-            "   no matches",
+            "   没有匹配结果",
             Style::default().fg(dim_color()).italic(),
         )));
         frame.render_widget(Paragraph::new(lines), inner);
@@ -1283,12 +1272,12 @@ mod tests {
         );
         assert_eq!(
             route_detail_display_text("", true).as_deref(),
-            Some("unavailable")
+            Some("不可用")
         );
         assert_eq!(route_detail_display_text("", false), None);
         assert_eq!(
-            route_detail_display_text("catalog still loading", false).as_deref(),
-            Some("catalog still loading")
+            route_detail_display_text("模型列表仍在加载", false).as_deref(),
+            Some("模型列表仍在加载")
         );
     }
 
@@ -1394,7 +1383,7 @@ mod tests {
         let entry = &mut picker.entries[0];
         entry.is_default = true;
 
-        assert!(picker_entry_display_name(entry).contains(" default"));
+        assert!(picker_entry_display_name(entry).contains(" 默认"));
     }
 
     #[test]
@@ -1409,8 +1398,8 @@ mod tests {
         let picker = sample_picker();
         let hint = model_picker_top_hint(&picker).expect("active model picker should show hint");
 
-        assert!(hint.contains("Ctrl+O set default"));
-        assert!(hint.contains("Ctrl+N favorite"));
+        assert!(hint.contains("Ctrl+O 设为默认"));
+        assert!(hint.contains("Ctrl+N 收藏"));
     }
 
     #[test]
@@ -1425,7 +1414,7 @@ mod tests {
 
         let hint = model_picker_top_hint(&picker).expect("swarm picker should show prompt hint");
         assert!(hint.contains("/swarm-prompt"));
-        assert!(hint.contains("swarm routing"));
+        assert!(hint.contains("协作路由"));
     }
 
     /// `/agents` must say which settings a choice changes and how to switch:
@@ -1443,8 +1432,8 @@ mod tests {
             }
         }
         let hint = model_picker_top_hint(&picker).expect("session hint");
-        assert!(hint.contains("THIS SESSION ONLY"), "{hint}");
-        assert!(hint.contains("Ctrl+G global default"), "{hint}");
+        assert!(hint.contains("仅此会话"), "{hint}");
+        assert!(hint.contains("Ctrl+G 全局默认"), "{hint}");
 
         for entry in &mut picker.entries {
             for option in &mut entry.options {
@@ -1452,8 +1441,8 @@ mod tests {
             }
         }
         let hint = model_picker_top_hint(&picker).expect("global hint");
-        assert!(hint.contains("GLOBAL DEFAULT"), "{hint}");
-        assert!(hint.contains("Ctrl+G this session"), "{hint}");
+        assert!(hint.contains("全局默认"), "{hint}");
+        assert!(hint.contains("Ctrl+G 仅此会话"), "{hint}");
 
         // The role list carries the scope in its row names.
         let mut roles = sample_picker();
@@ -1463,11 +1452,11 @@ mod tests {
                 crate::tui::PickerAction::AgentTarget(crate::tui::AgentModelTarget::Swarm);
         }
         let hint = model_picker_top_hint(&roles).expect("role list hint");
-        assert!(hint.contains("GLOBAL DEFAULT"), "{hint}");
+        assert!(hint.contains("全局默认"), "{hint}");
 
         // The plain /model picker keeps its own key hint.
         let hint = model_picker_top_hint(&sample_picker()).expect("model hint");
-        assert!(hint.contains("Ctrl+O set default"), "{hint}");
+        assert!(hint.contains("Ctrl+O 设为默认"), "{hint}");
     }
 
     #[test]
@@ -1542,9 +1531,9 @@ mod tests {
         let picker = sample_agent_target_picker();
 
         assert!(picker.is_agent_target_picker());
-        assert_eq!(picker.primary_label(), "TARGET");
-        assert_eq!(picker.secondary_label(false), "MODEL");
-        assert_eq!(picker.tertiary_label(), "CONFIG");
+        assert_eq!(picker.primary_label(), "角色");
+        assert_eq!(picker.secondary_label(false), "模型");
+        assert_eq!(picker.tertiary_label(), "配置");
         assert!(!picker.shows_default_shortcut_hint());
     }
 }

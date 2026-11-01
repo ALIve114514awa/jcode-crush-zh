@@ -579,7 +579,7 @@ fn execute_account_add_local(app: &mut App, provider_id: &str, label: Option<&st
                     Ok(label) => label,
                     Err(e) => {
                         app.push_display_message(DisplayMessage::error(format!(
-                            "Failed to prepare Claude account: {}",
+                            "无法准备 Claude 账户：{}",
                             e
                         )));
                         return;
@@ -595,7 +595,7 @@ fn execute_account_add_local(app: &mut App, provider_id: &str, label: Option<&st
                     Ok(label) => label,
                     Err(e) => {
                         app.push_display_message(DisplayMessage::error(format!(
-                            "Failed to prepare OpenAI account: {}",
+                            "无法准备 OpenAI 账户：{}",
                             e
                         )));
                         return;
@@ -1099,7 +1099,7 @@ fn render_auth_doctor_markdown(provider_filter: Option<&str>) -> String {
             "  - Status: {}",
             match assessment.state {
                 crate::auth::AuthState::Available => "ready",
-                crate::auth::AuthState::Expired => "needs attention",
+                crate::auth::AuthState::Expired => "需要处理",
                 crate::auth::AuthState::NotConfigured => "setup needed",
             }
         ));

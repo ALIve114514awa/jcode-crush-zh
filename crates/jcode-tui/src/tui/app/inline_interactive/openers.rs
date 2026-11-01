@@ -10,10 +10,8 @@ use crate::tui::{
 
 impl App {
     pub(crate) fn open_agents_picker(&mut self) {
-        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(
-            self,
-            "Agent model configuration",
-        ) {
+        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(self, "代理模型配置")
+        {
             return;
         }
         let models = [
@@ -97,10 +95,7 @@ impl App {
     }
 
     fn open_auth_provider_picker_inline(&mut self, logout: bool) {
-        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(
-            self,
-            "Local authentication",
-        ) {
+        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(self, "本地认证") {
             return;
         }
         let status = crate::auth::AuthStatus::check_fast();
@@ -127,7 +122,7 @@ impl App {
                         ) {
                             "detected"
                         } else {
-                            "configured"
+                            "已配置"
                         }
                     }
                     crate::auth::AuthState::Expired => "attention",
@@ -166,12 +161,12 @@ impl App {
             models.insert(
                 0,
                 PickerEntry {
-                    name: "All providers".to_string(),
+                    name: "全部服务商".to_string(),
                     options: vec![PickerOption {
                         provider: "all".to_string(),
                         api_method: "logout".to_string(),
                         available: true,
-                        detail: "Log out of every provider with a saved session".to_string(),
+                        detail: "退出所有已保存登录的服务商".to_string(),
                         estimated_reference_cost_micros: None,
                     }],
                     action: PickerAction::LogoutAll,
@@ -204,10 +199,8 @@ impl App {
     }
 
     pub(crate) fn open_agent_model_picker(&mut self, target: AgentModelTarget) {
-        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(
-            self,
-            "Agent model configuration",
-        ) {
+        if crate::tui::app::commands_dispatch::ssh_local_action_blocked(self, "代理模型配置")
+        {
             return;
         }
         let global_scope = self.agent_models_global_scope;
@@ -262,10 +255,10 @@ impl App {
                         PickerEntry {
                             name: saved.to_string(),
                             options: vec![PickerOption {
-                                provider: "saved override".to_string(),
+                                provider: "已保存的覆盖设置".to_string(),
                                 api_method: agent_model_target_config_path(target).to_string(),
                                 available: true,
-                                detail: "not in current picker catalog".to_string(),
+                                detail: "不在当前模型列表中".to_string(),
                                 estimated_reference_cost_micros: None,
                             }],
                             action: PickerAction::AgentModelChoice {
@@ -291,18 +284,18 @@ impl App {
                 0,
                 PickerEntry {
                     name: if global_scope {
-                        format!("use global fallback ({})", inherit_summary)
+                        format!("使用全局回退设置（{}）", inherit_summary)
                     } else {
-                        "use global default [session]".to_string()
+                        "使用全局默认值 [会话]".to_string()
                     },
                     options: vec![PickerOption {
                         provider: "default".to_string(),
                         api_method: agent_model_target_config_path(target).to_string(),
                         available: true,
                         detail: if global_scope {
-                            "clear global default".to_string()
+                            "清除全局默认值".to_string()
                         } else {
-                            format!("clear only this session override · {}", inherit_summary)
+                            format!("仅清除此会话的覆盖设置 · {}", inherit_summary)
                         },
                         estimated_reference_cost_micros: None,
                     }],
@@ -324,12 +317,12 @@ impl App {
             );
 
             let mut inherit = picker.entries[0].clone();
-            inherit.name = "inherit coordinator".to_string();
+            inherit.name = "跟随主代理".to_string();
             inherit.options[0].provider = "inherit".to_string();
             inherit.options[0].detail = if global_scope {
-                "global default: inherit coordinator"
+                "全局默认：跟随主代理"
             } else {
-                "session: bypass global default"
+                "会话：忽略全局默认值"
             }
             .to_string();
             inherit.action = PickerAction::AgentModelChoice {

@@ -510,6 +510,9 @@ pub struct Config {
     /// Built-in tool exposure configuration
     pub tools: ToolConfig,
 
+    /// On-demand language servers for read-only code queries.
+    pub lsp: jcode_lsp::LspConfig,
+
     /// Agent Client Protocol adapter configuration
     pub acp: AcpConfig,
 

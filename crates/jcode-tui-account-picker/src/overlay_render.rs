@@ -12,16 +12,12 @@ pub(super) fn provider_header_line(
 ) -> Line<'static> {
     let summary = if account_count > 0 {
         format!(
-            "  -  {}  -  {} other",
+            "  -  {}  -  另有 {} 项",
             account_count_summary(account_count),
             secondary_count
         )
     } else {
-        format!(
-            "  -  {} control{}",
-            secondary_count,
-            if secondary_count == 1 { "" } else { "s" }
-        )
+        format!("  -  {} 项操作", secondary_count)
     };
     Line::from(vec![
         Span::styled(" ", Style::default()),
@@ -92,14 +88,14 @@ pub(super) fn compact_item_title(item: &AccountPickerItem) -> String {
         }
         ActionSection::Add => item.title.clone(),
         ActionSection::Login => extract_account_label(&item.title)
-            .map(|label| format!("Refresh {label}"))
-            .unwrap_or_else(|| "Login / refresh".to_string()),
+            .map(|label| format!("刷新 {label}"))
+            .unwrap_or_else(|| "登录或刷新".to_string()),
         ActionSection::Overview if !item.details.is_empty() || item.title.contains("Usage") => {
             item.title.clone()
         }
-        ActionSection::Overview => "Provider settings".to_string(),
+        ActionSection::Overview => "服务商设置".to_string(),
         ActionSection::Remove => extract_account_label(&item.title)
-            .map(|label| format!("Remove {label}"))
+            .map(|label| format!("删除 {label}"))
             .unwrap_or_else(|| item.title.clone()),
         ActionSection::Setting | ActionSection::Other => item.title.clone(),
     }
@@ -125,11 +121,7 @@ pub(super) fn action_icon(item: &AccountPickerItem) -> (&'static str, Color) {
 }
 
 pub(super) fn account_count_summary(count: usize) -> String {
-    format!(
-        "{} saved account{}",
-        count,
-        if count == 1 { "" } else { "s" }
-    )
+    format!("已保存 {} 个账户", count)
 }
 
 pub(super) fn action_kind_label(command: &AccountPickerCommand) -> &'static str {
@@ -138,56 +130,44 @@ pub(super) fn action_kind_label(command: &AccountPickerCommand) -> &'static str 
 
 pub(super) fn action_kind_badge(command: &AccountPickerCommand) -> (&'static str, Color) {
     match action_kind_label(command) {
-        "overview" => ("overview", Color::Rgb(129, 184, 255)),
-        "login" => ("login", Color::Rgb(111, 214, 181)),
-        "setting" => ("setting", Color::Rgb(229, 187, 111)),
-        "danger" => ("remove", Color::Rgb(255, 140, 140)),
-        "account" => ("account", Color::Rgb(182, 154, 255)),
-        _ => ("action", Color::Rgb(180, 190, 220)),
+        "overview" => ("概览", Color::Rgb(129, 184, 255)),
+        "login" => ("登录", Color::Rgb(111, 214, 181)),
+        "setting" => ("设置", Color::Rgb(229, 187, 111)),
+        "danger" => ("删除", Color::Rgb(255, 140, 140)),
+        "account" => ("账户", Color::Rgb(182, 154, 255)),
+        _ => ("操作", Color::Rgb(180, 190, 220)),
     }
 }
 
 pub(super) fn action_kind_help(command: &AccountPickerCommand) -> &'static str {
     match command {
         AccountPickerCommand::OpenAccountCenter { .. } => {
-            "Returns to the main account center with all provider and saved-auth actions."
+            "返回账户中心，查看全部服务商及已保存登录信息。"
         }
         AccountPickerCommand::OpenAddReplaceFlow { .. } => {
-            "Opens a focused chooser where you pick whether to add a new Claude/OpenAI account or replace an existing saved one."
+            "选择添加新的 Claude/OpenAI 账户，或替换已保存的账户。"
         }
         AccountPickerCommand::SubmitInput(input) if input.ends_with(" settings") => {
-            "Opens a detailed text summary for this provider, including the exact commands you can run manually."
+            "查看此服务商的详细设置及可手动执行的命令。"
         }
         AccountPickerCommand::SubmitInput(input) if input.contains(" remove ") => {
-            "Removes saved credentials for the selected account. Use this when an account is stale or should no longer be available in jcode."
+            "删除所选账户的本地凭据，适用于已失效或不再使用的账户。"
         }
         AccountPickerCommand::SubmitInput(input) if input.contains(" login") => {
-            "Starts or refreshes authentication for this provider so it becomes usable again."
+            "开始登录或刷新此服务商的认证。"
         }
         AccountPickerCommand::SubmitInput(input) if input.contains(" add") => {
-            "Starts the flow for adding the next numbered account, so you can keep multiple identities side by side."
+            "添加下一个编号的账户，保留已有账户以便切换。"
         }
         AccountPickerCommand::SubmitInput(input) if input.contains(" switch ") => {
-            "Makes this account active so future requests use it immediately."
+            "立即切换到此账户，后续请求将使用它。"
         }
-        AccountPickerCommand::PromptValue { .. } => {
-            "Prompts for a new value, then saves the matching provider or global setting."
-        }
-        AccountPickerCommand::Switch { .. } => {
-            "Switches the active saved account for this provider."
-        }
-        AccountPickerCommand::Login { .. } => {
-            "Refreshes the selected account by starting the provider login flow again."
-        }
-        AccountPickerCommand::Remove { .. } => {
-            "Deletes the saved account credentials from local storage."
-        }
-        AccountPickerCommand::PromptNew { .. } => {
-            "Starts login for the next numbered account immediately."
-        }
-        AccountPickerCommand::SubmitInput(_) => {
-            "Runs the selected account-management command immediately."
-        }
+        AccountPickerCommand::PromptValue { .. } => "输入新值并保存对应的服务商或全局设置。",
+        AccountPickerCommand::Switch { .. } => "切换此服务商的当前账户。",
+        AccountPickerCommand::Login { .. } => "重新登录服务商以刷新所选账户。",
+        AccountPickerCommand::Remove { .. } => "从本地存储删除已保存的账户凭据。",
+        AccountPickerCommand::PromptNew { .. } => "立即登录并添加下一个编号的账户。",
+        AccountPickerCommand::SubmitInput(_) => "立即执行所选账户管理命令。",
     }
 }
 
@@ -260,19 +240,49 @@ pub(super) fn provider_style(provider_id: &str) -> Style {
 }
 
 pub(super) fn truncate_with_ellipsis(input: &str, width: usize) -> String {
+    use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
     if width == 0 {
         return String::new();
     }
-    let chars: Vec<char> = input.chars().collect();
-    if chars.len() <= width {
+    if input.width() <= width {
         return input.to_string();
     }
     if width <= 3 {
         return ".".repeat(width);
     }
-    let mut out: String = chars.into_iter().take(width - 3).collect();
+    let mut out = String::new();
+    let mut used = 0;
+    for ch in input.chars() {
+        let cells = ch.width().unwrap_or(0);
+        if used + cells > width - 3 {
+            break;
+        }
+        out.push(ch);
+        used += cells;
+    }
     out.push_str("...");
     out
+}
+
+#[cfg(test)]
+mod chinese_width_tests {
+    use super::truncate_with_ellipsis;
+    use unicode_width::UnicodeWidthStr;
+
+    #[test]
+    fn chinese_and_emoji_labels_fit_terminal_columns() {
+        for label in ["已配置的工作账户", "工作 😀 OAuth", "e\u{301} 中文账户"] {
+            for columns in 0..=24 {
+                let rendered = truncate_with_ellipsis(label, columns);
+                assert!(
+                    rendered.width() <= columns,
+                    "{label:?} at {columns}: {rendered:?}"
+                );
+            }
+        }
+        assert_eq!(truncate_with_ellipsis("工作账户", 7), "工作...");
+        assert_eq!(truncate_with_ellipsis("工作账户", 8), "工作账户");
+    }
 }
 
 pub(super) fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {

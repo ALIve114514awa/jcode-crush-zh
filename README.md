@@ -1,3 +1,13 @@
+# JCode 中文集成版
+
+本分支在 JCode 上加入简体中文常用界面、LSP 查询和 HTTP / SSE 远程 MCP。保留上游引擎和 TUI，Crush 用作能力设计参考。
+
+**中文使用与安装说明：[README.zh-CN.md](README.zh-CN.md)** · **详细配置与验证：[FUSION.md](FUSION.md)**
+
+Windows 默认入口为 `%LOCALAPPDATA%\jcode\bin\jcode.exe`。安装本定制版本请使用 `scripts/install-fusion.ps1`；下方保留的上游安装命令会安装上游版本。
+
+---
+
 <div align="center">
 
 # jcode

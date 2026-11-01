@@ -5,28 +5,26 @@ impl App {
         let topic = topic.trim().trim_start_matches('/').to_lowercase();
         let help = match topic.as_str() {
             "help" | "commands" => {
-                "/help\nShow general command list and keyboard shortcuts.\n\n/help <command>\nShow detailed help for one command."
+                "/help\n查看常用命令和快捷键。\n\n/help <command>\n查看指定命令的详细说明。命令名与参数保持英文。"
             }
             "compact" => {
-                "/compact\nForce context compaction now.\nStarts background summarization and applies it automatically when ready.\n\n/compact mode\nShow current compaction mode for this session.\n\n/compact mode <reactive|proactive|semantic>\nChange compaction mode for this session."
+                "/compact\n立即在后台总结旧消息，并在准备好后应用压缩结果。\n\n/compact mode\n查看当前会话的压缩模式。\n\n/compact mode <reactive|proactive|semantic>\n设置此会话的压缩模式。"
             }
             "cache" => {
-                "/cache  or  /cache stats\nShow KV cache stats for this session: cache read/write totals, hit ratios, active-route retention, current baseline, and recent miss attributions. Does not change cache preferences.\n\n/cache extend  or  /cache 1h\nPermanently select 1-hour Anthropic caching for subsequent requests and future sessions. Cache writes cost 2x base input tokens.\n\n/cache 5m\nSave 5-minute Anthropic caching. Existing cache entries are not extended retroactively. OpenAI retention is provider/model-managed, not changed by this preference."
+                "/cache 或 /cache stats\n查看此会话的缓存读写、命中率、保留策略和最近未命中原因，不修改设置。\n\n/cache extend 或 /cache 1h\n为后续请求和会话保存 Anthropic 一小时缓存设置，写入费用为基础输入 Token 的两倍。\n\n/cache 5m\n保存五分钟缓存设置；已有缓存不会因此延长。OpenAI 的缓存保留由服务商和模型管理。"
             }
             "fix" => {
-                "/fix\nRun recovery actions when the model cannot continue.\nRepairs missing tool outputs, resets provider session state, and starts compaction when possible."
+                "/fix\n尝试恢复无法继续的会话：补全缺失的工具结果、重置服务商会话状态，并在可能时压缩上下文。"
             }
             "rewind" => {
-                "/rewind\nShow numbered conversation history.\n\n/rewind N\nRewind to message N (drops everything after it and resets provider session).\n\n/rewind undo\nUndo the most recent rewind and restore the removed messages."
+                "/rewind\n显示带编号的对话历史。\n\n/rewind N\n回退到第 N 条消息，移除其后的消息并重置服务商会话。\n\n/rewind undo\n撤销最近一次回退并恢复被移除的消息。"
             }
-            "clear" => {
-                "/clear\nClear current conversation, queue, and display; starts a fresh session."
-            }
+            "clear" => "/clear\n清空当前对话、队列和界面，开始新会话。",
             "cls" | "clear-view" => {
-                "/cls\nClear the rendered view only. The model keeps its full context; nothing is sent or forgotten. (Ctrl+L clears the screen but keeps history in scrollback.)"
+                "/cls\n仅清空当前显示，模型仍保留完整上下文。Ctrl+L 清屏后，历史仍保留在终端滚动区。"
             }
             "model" => {
-                "/model\nOpen model picker.\n\n/model <name>\nSwitch model.\n\n/model <name>@<provider>\nPin OpenRouter routing (@auto clears pin)."
+                "/model\n打开模型选择器。\n\n/model <name>\n切换模型。\n\n/model <name>@<provider>\n为 OpenRouter 固定路由；@auto 清除固定路由。"
             }
             "provider-test-coverage"
             | "provider test coverage"
@@ -35,10 +33,10 @@ impl App {
                 "/provider-test-coverage\nShow jcode live verification evidence for the current provider/model.\n\n/provider-test-coverage <provider> <model>\nLook up a specific provider/model pair in the live-test coverage ledger.\n\nThe report shows last-tested time, jcode build, passed/missing checkpoints, readiness gaps, and a caveat that missing evidence is not a provider failure."
             }
             "refresh-model-list" => {
-                "/refresh-model-list\nForce-refresh provider model catalogs, update /model, and persist the refreshed cache."
+                "/refresh-model-list\n强制刷新服务商模型列表，更新 /model 并保存缓存。"
             }
             "agents" => {
-                "/agents\nConfigure agent models for this session only, preserved on resume.\n\n/agents <swarm|review|judge|memory|ambient>\nChoose a session override. Use global default clears it, while inherit bypasses a global pin.\n\n/agents default [role] (or /agents global [role])\nEdit saved global defaults for all sessions without a session override. Ambient session choices apply to scheduled workers spawned from this session, not the daemon's independent ambient loop."
+                "/agents\n设置此会话各代理角色的模型，恢复会话后仍保留。\n\n/agents <swarm|review|judge|memory|ambient>\n选择角色。使用全局默认值可清除会话覆盖；inherit 可忽略全局固定模型。\n\n/agents default [role]\n修改所有未设置会话覆盖的全局默认值。ambient 会话选项适用于由此会话启动的定时任务。"
             }
             "swarm-prompt" => {
                 "/swarm-prompt\nOpen the active swarm routing prompt in $VISUAL or $EDITOR.\n\nJcode uses a nonblank project override at ./.jcode/swarm-prompt.md when present, then ~/.jcode/swarm-prompt.md, then the built-in default. If no editable override exists, this command creates the global file from the built-in default. Restart or reload Jcode after editing because running agent tool registries cache the prompt."
@@ -47,22 +45,22 @@ impl App {
                 "/subagent <prompt>\nLaunch a subagent immediately.\n\nOptional flags:\n  --type <kind>         sets the subagent type (default general)\n  --model <name>        overrides the subagent model for this run\n  --continue <id>       resumes an existing subagent session"
             }
             "observe" => {
-                "/observe\nToggle transient observe mode for the side panel.\n\n/observe on\nEnable observe mode and focus the observe page.\n\n/observe off\nDisable observe mode.\n\n/observe status\nShow whether observe mode is enabled.\n\nObserve mode shows only the latest tool call or tool result added to context, and it is not persisted to disk."
+                "/observe\n切换侧栏观察模式。仅显示最新加入上下文的工具调用或结果，不保存到磁盘。\n\n/observe on\n启用并聚焦观察页。\n\n/observe off\n关闭。\n\n/observe status\n查看状态。"
             }
             "todos" | "todo" => {
-                "/todos\nShow the current session's todo list as an inline card in the chat (press again, or the todo-card hotkey, to dismiss the trailing card). The card live-updates as the todo list changes.\n\n/todos panel\nToggle the legacy dedicated todo screen in the side panel.\n\n/todos pin\nToggle pinning the full todo list to the top of the chat transcript while it scrolls (saved to config as display.pin_todos, off by default).\n\n/todos on\nEnable the side-panel todo screen and focus it.\n\n/todos off\nDisable the side-panel todo screen.\n\n/todos status\nShow todo card/panel/pin status."
+                "/todos\n在对话中显示待办卡片，随任务进度更新；再次执行可关闭。\n\n/todos panel\n切换侧栏待办页。\n\n/todos pin\n将待办固定在对话顶部，设置保存为 display.pin_todos。\n\n/todos on 或 off\n开启或关闭侧栏待办。\n\n/todos status\n查看卡片、侧栏和固定状态。"
             }
             "splitview" | "split-view" => {
-                "/splitview\nToggle a transient split view that mirrors the current chat in the side panel.\n\n/splitview on\nEnable split view and focus the mirrored chat page.\n\n/splitview off\nDisable split view.\n\n/splitview status\nShow whether split view is enabled.\n\nThis gives the side panel its own scroll position for the same conversation so you can read older context while keeping the main composer active."
+                "/splitview\n在侧栏同步显示此会话，可独立滚动查看旧内容。\n\n/splitview on 或 off\n开启或关闭。\n\n/splitview status\n查看状态。"
             }
             "btw" => {
                 "/btw <question>\nAsk a side question without derailing the current session.\n\nForks (splits) the session into a new window with the full conversation cloned, and the forked session starts by answering the question. The original session keeps working uninterrupted."
             }
             "git" => {
-                "/git\nShow git status --short --branch for the current session working directory.\n\n/git status\nAlias for /git."
+                "/git 或 /git status\n在会话工作目录运行 git status --short --branch，查看分支和文件状态。"
             }
             "commit" => {
-                "/commit\nAsk the agent to inspect current uncommitted changes and create interactive, logical commits.\n\nThe agent should group related files or hunks, preserve unrelated work, validate as appropriate, and report the commits created plus anything left uncommitted."
+                "/commit\n让代理检查当前修改，按相关文件或代码块分组提交，保留无关改动并进行适当验证。完成后报告提交及尚未提交的内容。"
             }
             "merge" => {
                 "/merge\nAsk the agent to merge the current branch into main/master, then leave HEAD on that destination branch.\n\nRequires a clean worktree and an attached branch. If both main and master exist, use the unambiguous configured remote default or ask. The agent validates the changes, uses a normal merge (fast-forward when possible), and stops on conflicts, aborting its own merge and returning to the source branch when safe. Uncommitted changes are never auto-committed or stashed. Nothing is pushed and no branches are deleted."
@@ -71,7 +69,7 @@ impl App {
                 "/merge-remote-release\nSame as /merge, then /remote-release from the destination main/master branch. Leaves HEAD on that branch.\n\nRequires a clean worktree. Stops the entire workflow on conflicts, failed validation, an ambiguous destination, or already being on the destination branch. Uncommitted work is never auto-committed or stashed before merging. After a verified merge, pushes normally and follows the repository's remote release conventions. In Jcode, runs scripts/quick-release.sh --remote so release artifacts are built remotely. Never force-pushes, moves existing tags, deletes branches, or bypasses remote release gates. Reports the merge, validation, version, and remote release status."
             }
             "commit-push" | "commit-and-push" => {
-                "/commit-push\nSame as /commit, then push the new commits to the remote tracking branch.\n\nThe agent groups related changes into logical commits, preserves unrelated work, then runs git push (using git push -u if the branch has no upstream). It will not force-push or rewrite already-pushed history, and reports the commits created plus the push result."
+                "/commit-push\n先按 /commit 的方式整理提交，再推送到跟踪分支；没有上游时使用 git push -u。不会强制推送或重写远端历史。"
             }
             "fast-release" | "cut-release" | "commit-push-release" => {
                 "/fast-release\nSame as /commit-push, then publish the release as quickly as possible from the local Linux machine.\n\nThe agent picks the semver bump and first runs scripts/quick-release.sh --prepare-fast before changing Cargo.toml. This refreshes and records the warm target/selfdev Linux binary without invalidating the cache for a version change. The agent then makes one release-metadata commit containing Cargo.toml, Cargo.lock, and the changelog, pushes it, and runs scripts/quick-release.sh --fast-local. That command wraps the prepared binary with the release identity, publishes Linux and the GitHub release immediately, and lets CI replace it with the portable Linux build while adding every other platform and final signoff assets. /cut-release is a compatibility alias."
@@ -152,45 +150,41 @@ impl App {
             "refactor" => {
                 "/refactor [focus]\nStart a refactor loop aimed at moving the repo toward a practical 10/10. The main agent inspects the project, writes a ranked refactor todo list, implements the best safe refactors itself, validates each batch, and asks one independent read-only subagent to review each meaningful batch before continuing.\n\n/refactor plan [focus]\nGenerate a ranked refactor todo list only, without editing files.\n\n/refactor resume\nResume the last saved refactor mode for this session using the current refactor todos.\n\n/refactor status\nShow the inferred status of the current refactor run and todo batch.\n\n/refactor stop\nAsk the model to stop after the next safe point, update todos, and summarize remaining work."
             }
-            "reload" => {
-                "/reload\nReload into the newest available binary if one is ready. This is fast and does not rebuild."
-            }
+            "reload" => "/reload\n重新加载最新可用程序，保留会话，不重新构建。",
             "restart" => {
-                "/restart\nRestart jcode with the current binary. Session is preserved.\nUseful after config changes, MCP server updates, or env var changes."
+                "/restart\n使用当前程序重启并保留会话。修改配置、MCP 服务器或环境变量后可使用此命令。"
             }
             "rebuild" => {
-                "/rebuild\nRun git pull --ff-only, cargo build --release, and release tests in the background. jcode stays usable and reloads automatically when the build is ready."
+                "/rebuild\n在后台执行 git pull --ff-only、发布构建和测试；完成后自动重新加载。构建期间仍可使用 JCode。"
             }
             "selfdev" => {
-                "/selfdev\nSpawn a new self-dev jcode session in a separate terminal.\n\n/selfdev <prompt>\nSpawn a new self-dev session and auto-deliver the prompt to it.\n\n/selfdev status\nShow current self-dev/build status."
+                "/selfdev\n在新终端打开自开发会话。\n\n/selfdev <prompt>\n同时发送初始提示词。\n\n/selfdev status\n查看自开发与构建状态。"
             }
             "fork" | "split" => {
-                "/fork\nFork the current session into a new terminal pane or window. Clones the full conversation history so both sessions continue from the same point. Inside tmux, jcode automatically opens a right-side pane.\n\n/fork <prompt>\nFork the session and start the new pane/window by answering the prompt. The original session keeps working uninterrupted.\n\n/split\nAlias for /fork."
+                "/fork\n复制完整对话到新终端窗口，两个会话从同一点继续；tmux 中默认打开右侧面板。\n\n/fork <prompt>\n新会话先回答指定问题，原会话继续工作。\n\n/split\n/fork 的别名。"
             }
             "resume" | "sessions" => {
-                "/resume\nOpen the interactive session picker. Browse and search all sessions, preview conversation history, and resume the highlighted session. By default, Enter resumes in the current terminal and Ctrl+Enter opens a new terminal; keybindings.session_picker_enter can swap those actions.{resume_shortcut}\n\nPress Esc to return to your current session."
+                "/resume\n打开历史会话选择器，可搜索会话、预览历史并恢复所选项。默认 Enter 在当前终端恢复，Ctrl+Enter 打开新终端；可通过 keybindings.session_picker_enter 交换。{resume_shortcut}\n\nEsc 返回当前会话。"
             }
-            "info" => "/info\nShow session metadata and token usage.",
+            "info" => "/info\n查看会话信息和 Token 用量。",
             "context" => {
-                "/context\nShow the full session context snapshot: prompt/context composition, compaction state, model/provider/runtime details, queued work, todos, and side-panel state."
+                "/context\n查看完整上下文快照，包括提示词组成、压缩状态、模型和服务商、排队工作、待办及侧栏状态。"
             }
-            "usage" => {
-                "/usage\nFetch and display usage limits for connected providers. This command only reports real connected-provider usage windows and reset times."
-            }
+            "usage" => "/usage\n查询已连接服务商的用量窗口和重置时间。仅显示服务商返回的真实数据。",
             "subscription" => {
                 "/subscription\nCompatibility alias for /hosted status. Shows hosted-model usage, your monthly spending limit, billing status, and router configuration."
             }
             "subscribe" | "hosted" => {
                 "/hosted\nUse Jcode hosted models without a subscription: choose a monthly spending limit, receive milestone warnings without throttling, and pay in progressively larger tranches. Sign in once with /login jcode.\n\n/hosted status\nShow usage and your current spending limit.\n\n/subscribe\nCompatibility alias for /hosted."
             }
-            "version" => "/version\nShow jcode version/build details.",
-            "changelog" => "/changelog\nShow recent changes embedded in this build.",
-            "quit" => "/quit\nExit jcode.",
+            "version" => "/version\n查看 JCode 版本及构建信息。",
+            "changelog" => "/changelog\n查看此程序内嵌的更新记录。",
+            "quit" => "/quit\n退出 JCode。",
             "config" => {
-                "/config\nShow active configuration.\n\n/config init\nCreate default config file.\n\n/config edit\nOpen config in $EDITOR."
+                "/config\n查看当前配置。\n\n/config init\n创建默认配置文件。\n\n/config edit\n使用 $EDITOR 打开配置文件。"
             }
             "alignment" => {
-                "/alignment\nShow the current alignment and the saved default.\n\n/alignment centered\nSave centered alignment as the default and apply it immediately.\n\n/alignment left\nSave left-aligned mode as the default and apply it immediately.\n\nPress Alt+C anytime to toggle alignment just for the current session."
+                "/alignment\n查看当前对齐方式和已保存的默认值。\n\n/alignment centered\n保存并立即应用居中对齐。\n\n/alignment left\n保存并立即应用左对齐。\n\nAlt+C 仅切换当前会话的对齐方式。"
             }
             "compact-notifications" => {
                 "/compact-notifications\nShow whether swarm/file-activity notifications are compact.\n\n/compact-notifications on\nCollapse file-activity notifications to a single line (path · summary), dropping the intent and diff preview.\n\n/compact-notifications off\nRestore the full multi-line notification cards."
@@ -202,21 +196,21 @@ impl App {
                 "/tool-call-details\nShow whether the dimmed technical detail (command, path, args) renders next to the model-provided intent on tool rows.\n\n/tool-call-details on\nShow the technical detail after the intent, e.g. `bash · Run tests · $ cargo test`.\n\n/tool-call-details off\nShow only the intent on tool rows that have one. Rows without an intent still show the technical detail, and error summaries always render."
             }
             "auth" | "login" => {
-                "/auth\nShow authentication status for all providers.\n\n/login\nInteractive provider selection - pick a provider to log into.\n\n/login <provider>\nStart login flow directly for any provider shown by /login or the /login completions.\n\nUse /login jcode for pay-as-you-go hosted models through the Jcode router. Set a monthly spending limit in the browser; no API key is pasted into the terminal."
+                "/auth\n查看所有服务商的认证状态。\n\n/login\n打开服务商登录选择器。\n\n/login <provider>\n直接开始指定服务商的登录。\n\n/login jcode\n使用 JCode 托管模型并在浏览器设置月度消费额度，无需在终端粘贴 API 密钥。"
             }
             "reset" => {
-                "/reset  or  /reset usage limits openai\nCheck available banked OpenAI resets without spending one. Repeating this command shows the same pending confirmation.\n\n/reset usage limits openai confirm\nSpend the reviewed reset. This cannot be undone. On an uncertain error, confirm again to retry the same request safely.\n\n/reset usage limits openai cancel\nClear the pending confirmation. An already submitted reset cannot be cancelled."
+                "/reset 或 /reset usage limits openai\n查看可用的 OpenAI 重置次数，暂不消耗。重复执行显示同一待确认操作。\n\n/reset usage limits openai confirm\n使用已查看的重置次数，无法撤销。结果不确定时可重复确认以重试同一请求。\n\n/reset usage limits openai cancel\n清除待确认操作；已提交的重置无法取消。"
             }
             "account" | "accounts" => {
-                "/account\nOpen the inline account picker showing both Claude and OpenAI accounts together. It lists saved accounts plus new/replace actions for each provider.\n\n/account claude  or  /account openai\nOpen the inline picker filtered to that provider.\n\n/account <provider> settings\nShow provider-specific account/settings details.\n\n/account <provider> login\nStart or refresh credentials for a provider.\n\n/account claude add  or  /account openai add\nCreate the next numbered OAuth account directly.\n\n/account <provider> switch <label>\nSwitch the active account for multi-account providers.\n\n/account <provider> remove <label>\nRemove a saved account.\n\n/account default-provider <provider|auto>\nSet the preferred default provider for future sessions.\n\n/account default-model <model|clear>\nSet the preferred default model for future sessions.\n\nOpenAI-specific settings:\n  /account openai transport ...\n  /account openai effort ...\n  /account openai fast on|off\n\nCustom provider settings:\n  /account openai-compatible api-base ...\n  /account openai-compatible api-key-name ...\n  /account openai-compatible env-file ...\n  /account openai-compatible default-model ..."
+                "/account\n打开 Claude 和 OpenAI 账户选择器，查看已保存账户并添加或替换。\n\n/account <provider>\n按服务商筛选。\n\n/account <provider> settings\n查看账户和配置详情。\n\n/account <provider> login\n登录或刷新凭据。\n\n/account claude add 或 /account openai add\n添加下一个编号的 OAuth 账户。\n\n/account <provider> switch <label>\n切换当前账户。\n\n/account <provider> remove <label>\n删除已保存账户。\n\n/account default-provider <provider|auto>\n设置后续会话的默认服务商。\n\n/account default-model <model|clear>\n设置或清除默认模型。\n\nOpenAI 还支持 transport、effort、fast 设置；自定义服务商支持 api-base、api-key-name、env-file、default-model。"
             }
             "save" => {
-                "/save\nBookmark the current session so it appears at the top of /resume.\n\n/save <label>\nBookmark with a custom label for easy identification.\n\nSaved sessions are shown in a dedicated \"Saved\" section in the session picker."
+                "/save\n收藏当前会话，使其显示在 /resume 的已收藏分组中。\n\n/save <label>\n使用自定义标签收藏会话。"
             }
             "rename" => {
                 "/rename <session name>\nSet a custom display title for the current session. This updates the window title and /resume display.\n\n/rename --clear\nClear the custom name and return to the generated session title."
             }
-            "unsave" => "/unsave\nRemove the bookmark from the current session.",
+            "unsave" => "/unsave\n取消收藏当前会话。",
             "client-reload" if self.is_remote => {
                 "/client-reload\nForce client binary reload in remote mode."
             }
@@ -233,7 +227,7 @@ impl App {
             &crate::tui::keybind::effort_switch_keys_label(),
         );
         let resume_shortcut = match crate::tui::keybind::load_open_resume_key().label {
-            Some(label) => format!(" You can also press {label} to open it directly."),
+            Some(label) => format!("也可按 {label} 直接打开。"),
             None => String::new(),
         };
         let help = help.replace("{resume_shortcut}", &resume_shortcut);

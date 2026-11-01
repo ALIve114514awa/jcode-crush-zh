@@ -634,12 +634,12 @@ impl App {
         picker.entries.insert(
             0,
             PickerEntry {
-                name: "inherit (current active model)".to_string(),
+                name: "跟随当前模型".to_string(),
                 options: vec![PickerOption {
                     provider: "session".to_string(),
                     api_method: "subagent_model".to_string(),
                     available: true,
-                    detail: "use the current active model".to_string(),
+                    detail: "使用当前已选模型".to_string(),
                     estimated_reference_cost_micros: None,
                 }],
                 action: PickerAction::SubagentModelChoice { inherit: true },
@@ -1287,7 +1287,7 @@ impl App {
                 false,
             );
             if self.inline_interactive_state.is_some() {
-                self.set_status_notice("Updating model routes…");
+                self.set_status_notice("正在更新模型路由…");
             } else {
                 self.open_loading_model_picker(&current_model);
             }
@@ -1336,7 +1336,7 @@ impl App {
                     false,
                 );
                 if self.inline_interactive_state.is_some() {
-                    self.set_status_notice("Updating model routes…");
+                    self.set_status_notice("正在更新模型路由…");
                 } else {
                     self.open_loading_model_picker(&current_model);
                 }
@@ -1377,7 +1377,7 @@ impl App {
 
     fn open_loading_model_picker(&mut self, current_model: &str) {
         let model_label = if current_model.trim().is_empty() || current_model == "unknown" {
-            "Loading models…".to_string()
+            "正在加载模型…".to_string()
         } else {
             current_model.to_string()
         };
@@ -1391,7 +1391,7 @@ impl App {
                     provider: self.provider.name().to_string(),
                     api_method: "current".to_string(),
                     available: true,
-                    detail: "updating model list…".to_string(),
+                    detail: "正在更新模型列表…".to_string(),
                     estimated_reference_cost_micros: None,
                 }],
                 action: PickerAction::Model,
@@ -1411,7 +1411,7 @@ impl App {
             filter: String::new(),
             preview: false,
         });
-        self.set_status_notice("Updating model list…");
+        self.set_status_notice("正在更新模型列表…");
     }
 
     fn start_model_picker_route_load(
@@ -1467,7 +1467,7 @@ impl App {
             Err(std::sync::mpsc::TryRecvError::Empty) => return false,
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                 self.pending_model_picker_load = None;
-                self.set_status_notice("Model list update failed");
+                self.set_status_notice("模型列表更新失败");
                 return true;
             }
         };
@@ -1530,12 +1530,12 @@ impl App {
                     true,
                 );
                 if self.inline_interactive_state.is_some() {
-                    self.set_status_notice("Model list updated");
+                    self.set_status_notice("模型列表已更新");
                 }
                 true
             }
             Err(error) => {
-                self.set_status_notice(format!("Model list update failed: {}", error));
+                self.set_status_notice(format!("模型列表更新失败：{}", error));
                 true
             }
         }
@@ -1615,7 +1615,7 @@ impl App {
                     .unwrap_or_else(|| "current".to_string()),
                 api_method: "current".to_string(),
                 available: true,
-                detail: "catalog still loading".to_string(),
+                detail: "模型列表仍在加载".to_string(),
                 usage: None,
                 cheapness: None,
             }]
@@ -1654,7 +1654,7 @@ impl App {
             self.push_display_message(DisplayMessage::system(
                 crate::tui::app::model_context::no_models_available_message(self.is_remote),
             ));
-            self.set_status_notice("No models available");
+            self.set_status_notice("没有可用模型");
             return routes;
         }
 
@@ -1751,12 +1751,14 @@ impl App {
                     if recent_auth_provider
                         .map(|provider| route_matches_recent_auth(&route.provider, provider))
                         .unwrap_or(false)
-                        && !route.detail.contains("recently added")
+                        && !["recently added", "最近新增"]
+                            .iter()
+                            .any(|label| route.detail.contains(label))
                     {
                         route.detail = if route.detail.trim().is_empty() {
-                            "recently added".to_string()
+                            "最近新增".to_string()
                         } else {
-                            format!("recently added · {}", route.detail)
+                            format!("最近新增 · {}", route.detail)
                         };
                     }
                 }
@@ -1895,20 +1897,20 @@ impl App {
         entries.sort_by(|a, b| {
             let a_current = if a.is_current { 0u8 } else { 1 };
             let b_current = if b.is_current { 0u8 } else { 1 };
-            let a_recent = if a
-                .options
-                .iter()
-                .any(|option| option.detail.contains("recently added"))
-            {
+            let a_recent = if a.options.iter().any(|option| {
+                ["recently added", "最近新增"]
+                    .iter()
+                    .any(|label| option.detail.contains(label))
+            }) {
                 0u8
             } else {
                 1
             };
-            let b_recent = if b
-                .options
-                .iter()
-                .any(|option| option.detail.contains("recently added"))
-            {
+            let b_recent = if b.options.iter().any(|option| {
+                ["recently added", "最近新增"]
+                    .iter()
+                    .any(|label| option.detail.contains(label))
+            }) {
                 0u8
             } else {
                 1
@@ -2421,7 +2423,7 @@ impl App {
     }
 
     fn handle_account_picker_selection(&mut self, action: AccountPickerAction) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local account selection") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地账户选择") {
             return;
         }
         match action {
@@ -2431,7 +2433,7 @@ impl App {
                         provider_id: provider_id.clone(),
                         label: label.clone(),
                     });
-                    self.set_status_notice(format!("Account → {} ({})", label, provider_id));
+                    self.set_status_notice(format!("账户 → {}（{}）", label, provider_id));
                     return;
                 }
 
@@ -2439,7 +2441,7 @@ impl App {
                     "claude" => self.switch_account(&label),
                     "openai" => self.switch_openai_account(&label),
                     _ => self.push_display_message(DisplayMessage::error(format!(
-                        "Provider `{}` does not support account switching.",
+                        "服务商 `{}` 不支持切换账户。",
                         provider_id
                     ))),
                 }
@@ -2448,19 +2450,19 @@ impl App {
                 "claude" => match crate::auth::claude::next_account_label() {
                     Ok(label) => self.start_claude_login_for_account(&label),
                     Err(e) => self.push_display_message(DisplayMessage::error(format!(
-                        "Failed to prepare Claude account: {}",
+                        "无法准备 Claude 账户：{}",
                         e
                     ))),
                 },
                 "openai" => match crate::auth::codex::next_account_label() {
                     Ok(label) => self.start_openai_login_for_account(&label),
                     Err(e) => self.push_display_message(DisplayMessage::error(format!(
-                        "Failed to prepare OpenAI account: {}",
+                        "无法准备 OpenAI 账户：{}",
                         e
                     ))),
                 },
                 _ => self.push_display_message(DisplayMessage::error(format!(
-                    "Provider `{}` does not support multiple accounts.",
+                    "服务商 `{}` 不支持多账户。",
                     provider_id
                 ))),
             },
@@ -2468,7 +2470,7 @@ impl App {
                 "claude" => self.start_claude_login_for_account(&label),
                 "openai" => self.start_openai_login_for_account(&label),
                 _ => self.push_display_message(DisplayMessage::error(format!(
-                    "Provider `{}` does not support account replacement.",
+                    "服务商 `{}` 不支持替换账户。",
                     provider_id
                 ))),
             },
@@ -2479,7 +2481,7 @@ impl App {
     }
 
     pub(super) fn open_session_picker(&mut self) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local session picker") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地会话选择") {
             return;
         }
         let current_dir = self.session.working_dir.clone();
@@ -2488,10 +2490,10 @@ impl App {
         {
             (
                 SessionPicker::new_grouped(server_groups, orphan_sessions),
-                "Refreshing sessions...",
+                "正在刷新会话…",
             )
         } else {
-            (SessionPicker::loading(), "Loading sessions...")
+            (SessionPicker::loading(), "正在加载会话…")
         };
         picker.set_current_dir(current_dir);
         picker.set_current_session_id(Some(super::commands::active_session_id(self)));
@@ -2507,7 +2509,7 @@ impl App {
     /// which are ready for input. Reached via Left arrow on an empty input
     /// (when `display.active_sessions_manager` is enabled) or `/active`.
     pub(super) fn open_active_sessions_picker(&mut self) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local active-session picker") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地活动会话选择") {
             return;
         }
         let current_dir = self.session.working_dir.clone();
@@ -2516,10 +2518,10 @@ impl App {
         {
             (
                 SessionPicker::new_grouped(server_groups, orphan_sessions),
-                "Refreshing active sessions...",
+                "正在刷新活动会话…",
             )
         } else {
-            (SessionPicker::loading(), "Loading active sessions...")
+            (SessionPicker::loading(), "正在加载活动会话…")
         };
         picker.set_current_dir(current_dir);
         picker.set_current_session_id(Some(super::commands::active_session_id(self)));
@@ -2588,7 +2590,7 @@ impl App {
                         picker.reseed_grouped(server_groups, orphan_sessions);
                         picker.apply_resume_project_scope_default();
                     }
-                    "Sessions loaded"
+                    "会话已加载"
                 }
                 SessionPickerMode::CatchUp => {
                     if let Some(existing) = self.session_picker_overlay.as_ref() {
@@ -2597,7 +2599,7 @@ impl App {
                         picker.activate_catchup_filter();
                         picker.reseed_grouped(server_groups, orphan_sessions);
                     }
-                    "Catch Up sessions loaded"
+                    "会话摘要已加载"
                 }
                 SessionPickerMode::ActiveSessions => {
                     if let Some(existing) = self.session_picker_overlay.as_ref() {
@@ -2607,7 +2609,7 @@ impl App {
                         picker.activate_active_filter();
                         picker.reseed_grouped(server_groups, orphan_sessions);
                     }
-                    "Active sessions loaded"
+                    "活动会话已加载"
                 }
                 SessionPickerMode::Onboarding => return false,
             };
@@ -2622,7 +2624,7 @@ impl App {
                 picker.set_current_session_id(Some(super::commands::active_session_id(self)));
                 picker.apply_resume_project_scope_default();
                 self.session_picker_overlay = Some(RefCell::new(picker));
-                self.set_status_notice("Sessions loaded");
+                self.set_status_notice("会话已加载");
                 true
             }
             SessionPickerMode::CatchUp => {
@@ -2630,7 +2632,7 @@ impl App {
                 picker.activate_catchup_filter();
                 picker.set_current_dir(self.session.working_dir.clone());
                 self.session_picker_overlay = Some(RefCell::new(picker));
-                self.set_status_notice("Catch Up sessions loaded");
+                self.set_status_notice("会话摘要已加载");
                 true
             }
             SessionPickerMode::ActiveSessions => {
@@ -2639,7 +2641,7 @@ impl App {
                 picker.set_current_session_id(Some(super::commands::active_session_id(self)));
                 picker.activate_active_filter();
                 self.session_picker_overlay = Some(RefCell::new(picker));
-                self.set_status_notice("Active sessions loaded");
+                self.set_status_notice("活动会话已加载");
                 true
             }
             // Onboarding constructs its action-only picker synchronously, so it
@@ -2677,10 +2679,10 @@ impl App {
                 if picker_active {
                     self.session_picker_overlay = None;
                     self.push_display_message(DisplayMessage::error(format!(
-                        "Failed to load sessions: {}",
+                        "会话加载失败：{}",
                         e
                     )));
-                    self.set_status_notice("Session load failed");
+                    self.set_status_notice("会话加载失败");
                     return true;
                 }
                 false
@@ -2691,9 +2693,9 @@ impl App {
                 if picker_active {
                     self.session_picker_overlay = None;
                     self.push_display_message(DisplayMessage::error(
-                        "Session loading stopped before returning a result.".to_string(),
+                        "会话加载尚未返回结果便已停止。".to_string(),
                     ));
-                    self.set_status_notice("Session load failed");
+                    self.set_status_notice("会话加载失败");
                     return true;
                 }
                 false
@@ -2702,15 +2704,15 @@ impl App {
     }
 
     pub(super) fn open_catchup_picker(&mut self) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local catch-up picker") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地会话摘要选择") {
             return;
         }
         let current_session_id = super::commands::active_session_id(self);
         if catchup_candidates(&current_session_id).is_empty() {
             self.push_display_message(DisplayMessage::system(
-                "No sessions currently need catch up.".to_string(),
+                "当前没有需要查看进度的会话。".to_string(),
             ));
-            self.set_status_notice("Catch Up: none waiting");
+            self.set_status_notice("会话摘要：没有待查看项");
             return;
         }
 
@@ -2732,15 +2734,13 @@ impl App {
         picker.activate_catchup_filter();
         self.session_picker_overlay = Some(RefCell::new(picker));
         self.session_picker_mode = SessionPickerMode::CatchUp;
-        self.set_status_notice("Loading Catch Up sessions...");
+        self.set_status_notice("正在加载会话摘要…");
         self.start_session_picker_load();
     }
 
     pub(super) fn handle_session_picker_selection(&mut self, targets: &[ResumeTarget]) {
-        if super::commands_dispatch::ssh_local_action_blocked(
-            self,
-            "Opening local session terminals",
-        ) {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "正在打开本地会话终端")
+        {
             return;
         }
         if targets.is_empty() {
@@ -2770,17 +2770,17 @@ impl App {
 
             if names.len() == 1 {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Queued Catch Up for {}.",
+                    "已将 {} 的摘要加入队列。",
                     names[0],
                 )));
-                self.set_status_notice(format!("Catch Up → {}", names[0]));
+                self.set_status_notice(format!("会话摘要 → {}", names[0]));
             } else {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Queued Catch Up for {} sessions: {}.",
+                    "已将 {} 个会话的摘要加入队列：{}。",
                     names.len(),
                     names.join(", "),
                 )));
-                self.set_status_notice(format!("Catch Up → {} sessions", names.len()));
+                self.set_status_notice(format!("会话摘要 → {} 个会话", names.len()));
             }
             return;
         }
@@ -2867,17 +2867,17 @@ impl App {
         if spawned > 0 && failed.is_empty() {
             if names.len() == 1 {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Resumed {} in new window.",
+                    "已在新窗口恢复 {}。",
                     names[0],
                 )));
-                self.set_status_notice(format!("Resumed {}", names[0]));
+                self.set_status_notice(format!("已恢复 {}", names[0]));
             } else {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Resumed {} sessions in new windows: {}.",
+                    "已在新窗口恢复 {} 个会话：{}。",
                     names.len(),
                     names.join(", "),
                 )));
-                self.set_status_notice(format!("Resumed {} sessions", names.len()));
+                self.set_status_notice(format!("已恢复 {} 个会话", names.len()));
             }
             return;
         }
@@ -2886,15 +2886,15 @@ impl App {
 
         if spawned > 0 {
             self.push_display_message(DisplayMessage::system(format!(
-                "Resumed {} session(s) in new windows. {} failed:\n{}",
+                "已在新窗口恢复 {} 个会话，{} 个失败：\n{}",
                 spawned,
                 failed.len(),
                 manual.join("\n")
             )));
-            self.set_status_notice(format!("Resumed {} session(s)", spawned));
+            self.set_status_notice(format!("已恢复 {} 个会话", spawned));
         } else {
             self.push_display_message(DisplayMessage::system(format!(
-                "No terminal found. Resume manually:\n{}",
+                "未找到终端，请手动恢复：\n{}",
                 manual.join("\n")
             )));
         }
@@ -2904,7 +2904,7 @@ impl App {
         &mut self,
         targets: &[ResumeTarget],
     ) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Importing local sessions") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "正在导入本地会话") {
             return;
         }
         let Some(target) = targets.first() else {
@@ -2943,7 +2943,7 @@ impl App {
             Ok(target) => target,
             Err(err) => {
                 self.push_display_message(DisplayMessage::error(format!(
-                    "Failed to import {}: {}",
+                    "导入 {} 失败：{}",
                     name, err
                 )));
                 return;
@@ -2952,7 +2952,7 @@ impl App {
 
         let ResumeTarget::JcodeSession { session_id } = resolved_target else {
             self.push_display_message(DisplayMessage::error(format!(
-                "Cannot resume {} in the current terminal.",
+                "无法在当前终端恢复 {}。",
                 name
             )));
             return;
@@ -2963,13 +2963,13 @@ impl App {
         if session_id == super::commands::active_session_id(self) {
             self.session_picker_overlay = None;
             self.session_picker_mode = SessionPickerMode::Resume;
-            self.set_status_notice("Already in this session");
+            self.set_status_notice("当前已在此会话中");
             return;
         }
 
         if targets.len() > 1 {
             self.push_display_message(DisplayMessage::system(format!(
-                "Selected {} sessions; resuming {} in this terminal.",
+                "已选择 {} 个会话，正在此终端恢复 {}。",
                 targets.len(),
                 name
             )));
@@ -2977,7 +2977,7 @@ impl App {
         self.workspace_client.queue_resume_session(session_id);
         self.session_picker_overlay = None;
         self.session_picker_mode = SessionPickerMode::Resume;
-        self.set_status_notice(format!("Switching → {}", name));
+        self.set_status_notice(format!("正在切换 → {}", name));
     }
 
     fn handle_live_claude_takeover(&mut self, target: &ResumeTarget) -> bool {
@@ -3021,14 +3021,14 @@ impl App {
     }
 
     pub(super) fn handle_batch_crash_restore(&mut self, session_ids: &[String]) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local session recovery") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地会话恢复") {
             return;
         }
         let recovered = match crate::session::recover_crashed_sessions_by_ids(session_ids) {
             Ok(ids) => ids,
             Err(e) => {
                 self.push_display_message(DisplayMessage::error(format!(
-                    "Failed to recover crashed sessions: {}",
+                    "恢复崩溃会话失败：{}",
                     e
                 )));
                 return;
@@ -3037,7 +3037,7 @@ impl App {
 
         if recovered.is_empty() {
             self.push_display_message(DisplayMessage::system(
-                "No crashed sessions found in the selected restore group.".to_string(),
+                "所选恢复分组中没有崩溃会话。".to_string(),
             ));
             return;
         }
@@ -3061,10 +3061,7 @@ impl App {
                 Ok(true) => spawned += 1,
                 Ok(false) => failed.push(session_id.clone()),
                 Err(e) => {
-                    crate::logging::error(&format!(
-                        "Failed to spawn session {}: {}",
-                        session_id, e
-                    ));
+                    crate::logging::error(&format!("启动会话 {} 失败：{}", session_id, e));
                     failed.push(session_id.clone());
                 }
             }
@@ -3080,17 +3077,17 @@ impl App {
         }
         if spawned > 0 && failed.is_empty() {
             self.push_display_message(DisplayMessage::system(format!(
-                "Restored {} crashed session(s) in new windows.",
+                "已在新窗口恢复 {} 个崩溃会话。",
                 spawned
             )));
-            self.set_status_notice(format!("Restored {} session(s)", spawned));
+            self.set_status_notice(format!("已恢复 {} 个会话", spawned));
         } else if spawned > 0 {
             let manual: Vec<String> = failed
                 .iter()
                 .map(|id| format!("  jcode --resume {}", id))
                 .collect();
             self.push_display_message(DisplayMessage::system(format!(
-                "Restored {} session(s) in new windows. {} failed:\n{}",
+                "已在新窗口恢复 {} 个会话，{} 个失败：\n{}",
                 spawned,
                 failed.len(),
                 manual.join("\n")
@@ -3101,7 +3098,7 @@ impl App {
                 .map(|id| format!("  jcode --resume {}", id))
                 .collect();
             self.push_display_message(DisplayMessage::system(format!(
-                "No terminal found. Resume manually:\n{}",
+                "未找到终端，请手动恢复：\n{}",
                 manual.join("\n")
             )));
         }
@@ -3112,7 +3109,7 @@ impl App {
         code: KeyCode,
         modifiers: KeyModifiers,
     ) -> Result<()> {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Local session picker") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "本地会话选择") {
             self.session_picker_overlay = None;
             return Ok(());
         }
@@ -3215,7 +3212,7 @@ impl App {
     }
 
     fn toggle_selected_model_favorite(&mut self) {
-        if super::commands_dispatch::ssh_local_action_blocked(self, "Saving model favorites") {
+        if super::commands_dispatch::ssh_local_action_blocked(self, "正在保存模型收藏") {
             return;
         }
         let Some((entry_name, is_favorite, store)) = (|| {
@@ -3248,9 +3245,9 @@ impl App {
         save_model_picker_favorites_store(&store);
         self.invalidate_model_picker_cache();
         let action = if is_favorite {
-            "Favorited"
+            "已收藏"
         } else {
-            "Unfavorited"
+            "已取消收藏"
         };
         self.set_status_notice(format!("{} {}", action, entry_name));
     }
@@ -3282,9 +3279,9 @@ impl App {
             None
         })();
         if let Some(entry_name) = selected_name {
-            self.set_status_notice(format!("Favorite → {}", entry_name));
+            self.set_status_notice(format!("收藏 → {}", entry_name));
         } else {
-            self.set_status_notice("No favorited models yet. Use Ctrl+N to favorite one.");
+            self.set_status_notice("尚未收藏模型，使用 Ctrl+N 收藏。");
         }
     }
 
@@ -3304,10 +3301,10 @@ impl App {
                 .map(|entry| entry.name.clone())
         })();
         if let Some(entry_name) = selected_name {
-            self.set_status_notice(format!("Favorite → {}", entry_name));
+            self.set_status_notice(format!("收藏 → {}", entry_name));
             true
         } else {
-            self.set_status_notice("No favorited models yet. Use Ctrl+N to favorite one.");
+            self.set_status_notice("尚未收藏模型，使用 Ctrl+N 收藏。");
             false
         }
     }
@@ -3330,7 +3327,7 @@ impl App {
             .map(picker_is_runtime_model_picker)
             .unwrap_or(false)
         {
-            self.set_status_notice("Model favorites unavailable until model routes finish loading");
+            self.set_status_notice("模型路由加载完成后才能使用收藏");
             return;
         }
         if self.cycle_model_favorite_after_current() {
@@ -3358,9 +3355,9 @@ impl App {
                 AgentModelsPickerView::Models(target) => self.open_agent_model_picker(target),
             }
             self.set_status_notice(if self.agent_models_global_scope {
-                "/agents: editing the global default (all sessions)"
+                "/agents：正在修改全局默认值（所有会话）"
             } else {
-                "/agents: editing this session only"
+                "/agents：仅修改此会话"
             });
             return Ok(());
         }
@@ -3487,10 +3484,8 @@ impl App {
             code if modifiers.contains(KeyModifiers::CONTROL)
                 && key_char_eq_ignore_ascii_case(code, 'o') =>
             {
-                if super::commands_dispatch::ssh_local_action_blocked(
-                    self,
-                    "Saving a default model",
-                ) {
+                if super::commands_dispatch::ssh_local_action_blocked(self, "正在保存默认模型")
+                {
                     return Ok(());
                 }
                 if let Some(ref picker) = self.inline_interactive_state {
@@ -3523,7 +3518,7 @@ impl App {
                     };
 
                     let notice = format!(
-                        "Default → {} via {}",
+                        "默认 → {}，通过 {}",
                         model_spec,
                         provider_key.as_deref().unwrap_or("auto")
                     );
@@ -3553,7 +3548,7 @@ impl App {
                                 };
                                 if let Some(Err(e)) = save_result {
                                     self.push_display_message(DisplayMessage::error(format!(
-                                        "Saved default model, but failed to save effort: {}",
+                                        "默认模型已保存，但推理强度保存失败：{}",
                                         e
                                     )));
                                 }
@@ -3568,13 +3563,13 @@ impl App {
                                 }
                             }
                             self.push_display_message(DisplayMessage::system(format!(
-                                "Saved default model: {} via {}. This affects future sessions.",
+                                "已保存默认模型：{}，通过 {}，将用于后续会话。",
                                 model_spec,
                                 provider_key.as_deref().unwrap_or("auto")
                             )));
                             self.set_status_notice(notice)
                         }
-                        Err(e) => self.set_status_notice(format!("Failed to save default: {}", e)),
+                        Err(e) => self.set_status_notice(format!("保存默认值失败：{}", e)),
                     }
                 }
             }
@@ -3605,7 +3600,7 @@ impl App {
                     self.inline_interactive_state = None;
                     super::commands_dispatch::ssh_local_action_blocked(
                         self,
-                        "Local account or agent-model picker",
+                        "本地账户或代理模型选择",
                     );
                     return Ok(());
                 }
@@ -3670,7 +3665,7 @@ impl App {
                         content.push(format!("status: {}", status.label_for_display()));
                         content.extend(detail_lines);
                         self.push_display_message(DisplayMessage::usage(content.join("\n")));
-                        self.set_status_notice(format!("Usage → {}", title));
+                        self.set_status_notice(format!("用量 → {}", title));
                     }
                     PickerAction::AgentTarget(target) => {
                         self.open_agent_model_picker(target);
@@ -3687,9 +3682,9 @@ impl App {
                             // AgentModelsChanged confirms persistence. Generic Ack
                             // is sent by the server before request dispatch.
                             self.set_status_notice(if self.agent_models_global_scope {
-                                "Applying agent model [global]…"
+                                "正在应用代理模型 [全局]…"
                             } else {
-                                "Applying agent model [session]…"
+                                "正在应用代理模型 [会话]…"
                             });
                             return Ok(());
                         } else if self.agent_models_global_scope {
@@ -3712,27 +3707,27 @@ impl App {
                                 );
                                 if clear_override {
                                     self.push_display_message(DisplayMessage::system(format!(
-                                        "{} model override cleared. Using default `{}`.",
+                                        "已清除 {} 模型覆盖，使用默认值 `{}`。",
                                         label,
                                         agent_model_default_summary(target, self)
                                     )));
-                                    self.set_status_notice(format!("{} model: inherit", label));
+                                    self.set_status_notice(format!("{} 模型：跟随主代理", label));
                                 } else {
                                     let spec = model_entry_saved_spec(&entry);
                                     self.push_display_message(DisplayMessage::system(format!(
-                                        "Saved {} model override: `{}`.",
+                                        "已保存 {} 模型覆盖：`{}`。",
                                         label, spec
                                     )));
-                                    self.set_status_notice(format!("{} model → {}", label, spec));
+                                    self.set_status_notice(format!("{} 模型 → {}", label, spec));
                                 }
                             }
                             Err(error) => {
                                 self.push_display_message(DisplayMessage::error(format!(
-                                    "Failed to save {} model override: {}",
+                                    "保存 {} 模型覆盖失败：{}",
                                     agent_model_target_label(target),
                                     error
                                 )));
-                                self.set_status_notice("Agent model save failed");
+                                self.set_status_notice("代理模型保存失败");
                             }
                         }
                     }
@@ -3740,17 +3735,17 @@ impl App {
                         self.inline_interactive_state = None;
                         if inherit {
                             self.session.subagent_model = None;
-                            self.set_status_notice("Subagent model: inherit");
+                            self.set_status_notice("子代理模型：跟随主代理");
                             self.push_display_message(DisplayMessage::system(format!(
-                                "Subagent model reset to inherit the current model ({}).",
+                                "子代理将跟随当前模型（{}）。",
                                 self.provider.model()
                             )));
                         } else {
                             let spec = model_entry_saved_spec(&entry);
                             self.session.subagent_model = Some(spec.clone());
-                            self.set_status_notice(format!("Subagent model → {}", spec));
+                            self.set_status_notice(format!("子代理模型 → {}", spec));
                             self.push_display_message(DisplayMessage::system(format!(
-                                "Subagent model pinned to {} for this session.",
+                                "此会话的子代理模型已固定为 {}。",
                                 spec
                             )));
                         }
@@ -3766,7 +3761,7 @@ impl App {
                                     self.is_remote,
                                 ),
                             ));
-                            self.set_status_notice("Model unavailable");
+                            self.set_status_notice("模型不可用");
                             return Ok(());
                         }
 
@@ -3795,10 +3790,10 @@ impl App {
                         let placeholder_route =
                             placeholder_routes::is_placeholder_route_method(&route.api_method);
                         let notice = if placeholder_route {
-                            format!("Model → {}", entry.name)
+                            format!("模型 → {}", entry.name)
                         } else {
                             format!(
-                                "Model → {} via {} ({})",
+                                "模型 → {}，通过 {}（{}）",
                                 entry.name, route.provider, method_label
                             )
                         };
@@ -3897,7 +3892,7 @@ impl App {
                                             self.is_remote,
                                         ),
                                     ));
-                                    self.set_status_notice("Model switch failed");
+                                    self.set_status_notice("模型切换失败");
                                     return Ok(());
                                 }
                             }
@@ -4070,7 +4065,7 @@ mod tests {
                 .last()
                 .unwrap()
                 .content
-                .contains("Saving a default model")
+                .contains("正在保存默认模型")
         );
         // Choosing a runtime route still stages a request for the remote daemon.
         for _ in 0..3 {

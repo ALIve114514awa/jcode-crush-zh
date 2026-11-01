@@ -16,60 +16,62 @@ pub(crate) enum TranscriptModeArg {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
 pub(crate) enum ProviderAuthArg {
-    /// Send the API key as Authorization: Bearer <key> (OpenAI-compatible default)
+    /// 使用 Authorization: Bearer <key> 发送 API 密钥（OpenAI 兼容接口默认方式）
     Bearer,
-    /// Send the API key in an API-key header (defaults to api-key)
+    /// 通过 API 密钥请求头发送密钥（默认 api-key）
     ApiKey,
-    /// Do not send authentication, useful for localhost model servers
+    /// 不发送认证信息，适用于本地模型服务
     None,
 }
 
 #[derive(Parser, Debug)]
 #[command(name = "jcode")]
 #[command(version = jcode_build_meta::version())]
-#[command(about = "J-Code: A coding agent using Claude Max or ChatGPT Pro subscriptions")]
+#[command(about = "JCode 中文集成版：支持 LSP 与远程 MCP 的编码代理")]
+#[command(help_template = "{about-with-newline}\n用法：{usage}\n\n{all-args}{after-help}")]
+#[command(subcommand_help_heading = "命令", next_help_heading = "选项")]
 pub(crate) struct Args {
-    /// Initial provider to use (jcode, claude, openai, openai-api, openrouter, azure, opencode, opencode-go, zai, 302ai, baseten, conifer, cortecs, comtegra, deepseek, fpt, firmware, huggingface, moonshotai, nebius, scaleway, stackit, groq, mistral, perplexity, togetherai, deepinfra, xai, grok-build, nvidia-nim, lmstudio, ollama, chutes, cerebras, alibaba-coding-plan, openai-compatible, cursor, copilot, gemini, antigravity, google, or auto-detect). Interactive sessions can switch providers with /model.
+    /// 初始模型服务商，auto 自动选择。交互界面可用 /model 切换。
     #[arg(short, long, default_value = "auto", global = true)]
     pub(crate) provider: ProviderChoice,
 
-    /// Working directory for the local client process
+    /// 本地客户端的工作目录
     #[arg(short = 'C', long, global = true)]
     pub(crate) cwd: Option<String>,
 
-    /// Working directory to send to a remote server when using --socket
+    /// 使用 --socket 时发送给远程服务器的工作目录
     #[arg(long, global = true)]
     pub(crate) remote_working_dir: Option<String>,
 
-    /// Run the UI locally and attach to the persistent Jcode server on this SSH host
+    /// 本地显示界面，连接指定 SSH 主机上的持久 JCode 服务器
     #[arg(long, global = true, conflicts_with = "socket", value_name = "HOST")]
     pub(crate) ssh: Option<String>,
 
-    /// Remote Jcode executable name or literal path (requires --ssh)
+    /// 远程 JCode 程序名称或路径（需要 --ssh）
     #[arg(long, global = true, requires = "ssh", value_name = "PATH")]
     pub(crate) ssh_binary: Option<String>,
 
-    /// Remote daemon socket override, for isolated servers (requires --ssh)
+    /// 远程服务器的独立连接端点（需要 --ssh）
     #[arg(long, global = true, requires = "ssh", value_name = "PATH")]
     pub(crate) ssh_server_socket: Option<String>,
 
-    /// Skip the automatic update check
+    /// 跳过自动更新检查
     #[arg(long, global = true)]
     pub(crate) no_update: bool,
 
-    /// Auto-update when new version is available (default: true for release builds)
+    /// 有新版本时自动更新（发布构建默认启用）
     #[arg(long, global = true, default_value = "true")]
     pub(crate) auto_update: bool,
 
-    /// Log tool inputs/outputs and token usage to stderr
+    /// 将工具输入输出和 Token 用量记录到标准错误
     #[arg(long, global = true)]
     pub(crate) trace: bool,
 
-    /// Suppress non-error CLI/status output for scripting and wrappers
+    /// 仅显示错误，适合脚本使用
     #[arg(long, global = true)]
     pub(crate) quiet: bool,
 
-    /// Resume a session by ID, or list sessions if no ID provided
+    /// 按 ID 恢复会话；不传 ID 时列出会话
     #[arg(long, global = true, num_args = 0..=1, default_missing_value = "")]
     pub(crate) resume: Option<String>,
 
@@ -81,64 +83,55 @@ pub(crate) struct Args {
     #[arg(long, global = true, hide = true, value_name = "CHORD")]
     pub(crate) spawn_hotkey: Option<String>,
 
-    /// Disable auto-detection of jcode repository and self-dev mode
+    /// 禁用 JCode 仓库自动检测与自开发模式
     #[arg(long, global = true)]
     pub(crate) no_selfdev: bool,
 
-    /// Rehearse first-run onboarding on launch: the real flow, as if jcode
-    /// were new on this machine (same as `/onboarding-sim`).
+    /// 启动时模拟首次使用引导（同 /onboarding-sim）
     #[arg(long = "onboarding-sim")]
     pub(crate) onboarding_sim: bool,
 
-    /// Launch the normal TUI, skip onboarding, then autoplay a safe simulation
-    /// of receiving, downloading, installing, and restarting after an update.
+    /// 启动终端界面并安全预览更新、安装和重启流程
     #[arg(long = "update-sim")]
     pub(crate) update_sim: bool,
 
-    /// Custom socket path for server/client communication.
-    ///
-    /// Clients dial this path instead of the shared daemon socket. A headless
-    /// `run` hosts its agent in-process, so nothing binds the path until a
-    /// tool needs a server (today: `swarm`); the first such tool starts a
-    /// temporary server here that exits with the run, leaving no daemon
-    /// behind on a one-off socket.
+    /// 客户端与服务器使用的独立连接端点。单次 run 仅在需要时启动临时服务器，并在任务结束后退出。
     #[arg(long, global = true)]
     pub(crate) socket: Option<String>,
 
-    /// Enable debug socket (broadcasts all TUI state changes)
+    /// 启用调试连接，广播界面状态变化
     #[arg(long, global = true)]
     pub(crate) debug_socket: bool,
 
-    /// Model to use (e.g., claude-opus-4-6, gpt-5.5)
+    /// 模型名称，例如 claude-opus-4-6 或 gpt-5.5
     #[arg(short, long, global = true)]
     pub(crate) model: Option<String>,
 
-    /// Named provider profile from [providers.<name>] in config.toml.
-    /// Implies --provider openai-compatible for OpenAI-compatible profiles.
+    /// 使用 config.toml 中 [providers.<name>] 的命名配置；兼容接口将使用 openai-compatible 服务商
     #[arg(long, global = true)]
     pub(crate) provider_profile: Option<String>,
 
-    /// Tool profile to expose to the model: full, minimal/lite, or none.
+    /// 向模型提供的工具集合：full、minimal/lite 或 none
     #[arg(long, global = true)]
     pub(crate) tool_profile: Option<String>,
 
-    /// Comma-separated explicit allow-list of tools to expose, e.g. bash,read,write,apply_patch. Use '*' or 'all' for the unrestricted full toolset.
+    /// 逗号分隔的工具白名单，如 bash,read,write,apply_patch；* 或 all 表示全部
     #[arg(long, global = true)]
     pub(crate) tools: Option<String>,
 
-    /// Comma-separated list of tools to hide after applying the selected profile.
+    /// 应用工具集合后，额外隐藏的工具名称（逗号分隔）
     #[arg(long, global = true)]
     pub(crate) disabled_tools: Option<String>,
 
-    /// Hide all built-in tools unless --tools or [tools].enabled opts tools back in.
+    /// 隐藏内置工具，除非 --tools 或 [tools].enabled 明确启用
     #[arg(long, global = true)]
     pub(crate) disable_base_tools: bool,
 
-    /// MCP tool exposure mode: auto, eager, or deferred.
+    /// MCP 工具展示方式：auto、eager 或 deferred
     #[arg(long, global = true, value_parser = ["auto", "eager", "deferred"])]
     pub(crate) mcp_tools: Option<String>,
 
-    /// Token estimate at which --mcp-tools=auto switches to deferred exposure.
+    /// auto 模式切换到延迟展示的 Token 阈值
     #[arg(long, global = true, value_name = "TOKENS")]
     pub(crate) mcp_tools_token_threshold: Option<usize>,
 
@@ -148,7 +141,7 @@ pub(crate) struct Args {
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Command {
-    /// Start the agent server (background daemon)
+    /// 启动代理后台服务器
     Serve {
         /// Internal: mark this server as temporary so it can self-clean when its owner exits.
         #[arg(long, hide = true)]
@@ -170,35 +163,35 @@ pub(crate) enum Command {
         server_name: Option<String>,
     },
 
-    /// Run as an Agent Client Protocol (ACP) adapter backed by the Jcode daemon
+    /// 运行基于 JCode 服务器的 ACP 适配器
     Acp,
 
-    /// Manage the background server daemon (e.g. `jcode server stop`).
+    /// 管理后台服务器，例如 jcode server stop
     Server {
         #[command(subcommand)]
         action: ServerCommand,
     },
 
-    /// Connect to a running server
+    /// 连接正在运行的服务器
     Connect,
 
-    /// Run a single message and exit
+    /// 执行一条消息后退出
     Run {
-        /// Emit a machine-readable JSON result instead of streaming text
+        /// 以 JSON 输出结果，适合脚本读取
         #[arg(long, conflicts_with = "ndjson")]
         json: bool,
 
-        /// Emit newline-delimited JSON events while the response streams
+        /// 流式输出每行一个 JSON 事件
         #[arg(long, conflicts_with = "json")]
         ndjson: bool,
 
-        /// The message to send
+        /// 要发送的消息
         message: String,
     },
 
-    /// Login to a provider via OAuth, API key, or local credentials
+    /// 通过 OAuth、API 密钥或本地凭据登录服务商
     Login {
-        /// Provider to log in to. Equivalent to --provider for this command, e.g. `jcode login google`.
+        /// 要登录的服务商，例如 jcode login google
         // Distinct clap id: the global `--provider` flag also has id "provider";
         // sharing the id makes clap drop the flag inside `login` (so
         // `jcode login --provider x` errors) and propagate the global default
@@ -206,15 +199,15 @@ pub(crate) enum Command {
         #[arg(value_enum, id = "login_provider", value_name = "PROVIDER")]
         provider: Option<ProviderChoice>,
 
-        /// Account label for multi-account support (stored labels are auto-numbered)
+        /// 多账户标签（已保存标签自动编号）
         #[arg(long, short = 'a')]
         account: Option<String>,
 
-        /// Do not open a local browser. Show a login QR for another device (useful over SSH).
+        /// 不打开本地浏览器，显示供其他设备扫描的登录二维码
         #[arg(long, alias = "headless")]
         no_browser: bool,
 
-        /// Print a script-friendly auth URL and persist temporary login state for later completion.
+        /// 输出适合脚本的登录地址，并保存临时登录状态
         #[arg(long, conflicts_with_all = ["callback_url", "auth_code"])]
         print_auth_url: bool,
 
@@ -263,37 +256,37 @@ pub(crate) enum Command {
         api_key_env: Option<String>,
     },
 
-    /// Log in to and manage your Jcode account
+    /// 登录并管理 JCode 账户
     Account {
         #[command(subcommand)]
         action: AccountCommand,
     },
 
-    /// Run in simple REPL mode (no TUI)
+    /// 使用简单命令行交互模式
     Repl,
 
-    /// Update jcode to the latest version
+    /// 更新 JCode
     Update,
 
-    /// Show build/version information in human or JSON form
+    /// 以文字或 JSON 显示版本和构建信息
     Version {
         /// Emit JSON instead of plain text
         #[arg(long)]
         json: bool,
     },
 
-    /// Show usage limits for connected providers
+    /// 查看已连接服务商的用量限制
     Usage {
         /// Emit JSON instead of plain text
         #[arg(long)]
         json: bool,
     },
 
-    /// Inspect or change anonymous telemetry settings
+    /// 查看或修改匿名遥测设置
     #[command(subcommand)]
     Telemetry(TelemetryCommand),
 
-    /// Self-development mode: run as a canary session on the shared server
+    /// 自开发模式：通过共享服务器运行开发会话
     #[command(alias = "selfdev")]
     SelfDev {
         /// Build and test a new canary version before launching
@@ -301,7 +294,7 @@ pub(crate) enum Command {
         build: bool,
     },
 
-    /// Debug socket CLI - interact with running jcode server
+    /// 通过命令行调试正在运行的 JCode 服务器
     Debug {
         /// Debug command to run (list, start, sessions, create_session, message, tool, state, history, etc.)
         #[arg(default_value = "help")]
@@ -324,31 +317,31 @@ pub(crate) enum Command {
         wait: bool,
     },
 
-    /// Authentication status and validation helpers
+    /// 查看并验证认证状态
     #[command(subcommand)]
     Auth(AuthCommand),
 
-    /// Provider discovery and selection helpers
+    /// 查找和选择模型服务商
     #[command(subcommand)]
     Provider(ProviderCommand),
 
-    /// Memory management commands
+    /// 管理记忆
     #[command(subcommand)]
     Memory(MemoryCommand),
 
-    /// Session management commands
+    /// 管理会话
     #[command(subcommand)]
     Session(SessionCommand),
 
-    /// Ambient mode management
+    /// 管理后台任务模式
     #[command(subcommand)]
     Ambient(AmbientCommand),
 
-    /// Optional Jcode Cloud/Jade integration commands
+    /// 可选的 JCode Cloud/Jade 集成
     #[command(subcommand)]
     Cloud(CloudCommand),
 
-    /// Generate a pairing code for iOS/web client
+    /// 生成 iOS 或网页客户端配对码
     Pair {
         /// List paired devices instead of generating a code
         #[arg(long)]
@@ -359,10 +352,10 @@ pub(crate) enum Command {
         revoke: Option<String>,
     },
 
-    /// Review and respond to pending ambient permission requests
+    /// 查看并处理后台任务权限请求
     Permissions,
 
-    /// Inject externally transcribed text into the active Jcode TUI
+    /// 将外部转写文字送入当前终端界面
     Transcript {
         /// Transcript text. If omitted, reads from stdin.
         text: Option<String>,
@@ -376,14 +369,14 @@ pub(crate) enum Command {
         session: Option<String>,
     },
 
-    /// Run configured dictation: send to last-focused jcode client or type raw text
+    /// 运行已配置的听写工具并发送到最近聚焦的客户端
     Dictate {
         /// Type the transcript into the focused app instead of sending to jcode
         #[arg(long)]
         r#type: bool,
     },
 
-    /// Set up the platform global hotkey to launch jcode
+    /// 设置全局启动快捷键
     SetupHotkey {
         /// Internal: run as the macOS hotkey listener process.
         #[arg(long, hide = true)]
@@ -402,10 +395,10 @@ pub(crate) enum Command {
         uninstall: bool,
     },
 
-    /// Install platform launcher integration (Windows shortcut; macOS notification helper)
+    /// 安装系统启动入口（Windows 快捷方式或 macOS 助手）
     SetupLauncher,
 
-    /// Browser automation setup and status
+    /// 配置浏览器自动化并查看状态
     Browser {
         /// Action (setup, status, detect)
         #[arg(default_value = "setup")]
@@ -416,7 +409,7 @@ pub(crate) enum Command {
         browser: Option<String>,
     },
 
-    /// Replay a saved session in the TUI
+    /// 在终端界面回放已保存会话
     Replay {
         /// Session ID, name, or path to session JSON file
         session: String,
@@ -466,11 +459,11 @@ pub(crate) enum Command {
         no_centered: bool,
     },
 
-    /// Model management commands
+    /// 管理模型
     #[command(subcommand)]
     Model(ModelCommand),
 
-    /// Show live verification coverage. With no provider/model, prints the full coverage summary.
+    /// 查看服务商和模型的实测覆盖情况
     #[command(name = "provider-test-coverage", alias = "model-status")]
     ProviderTestCoverage {
         /// Provider to look up. Omit provider and model to print the full coverage summary.
@@ -490,8 +483,7 @@ pub(crate) enum Command {
         coverage_limit: usize,
     },
 
-    /// Diagnose why a provider/model or the model picker is broken by walking the
-    /// strict end-to-end checkpoints (catalog, picker, model-switch, chat, streaming, tools).
+    /// 依次检查模型列表、选择器、切换、聊天、流式输出和工具调用，诊断模型问题
     #[command(name = "provider-doctor", alias = "provider-strict-e2e")]
     ProviderDoctor {
         /// OpenAI-compatible provider id to diagnose (e.g. cerebras, fpt, nvidia-nim)
@@ -508,7 +500,7 @@ pub(crate) enum Command {
         json: bool,
     },
 
-    /// Test authentication end-to-end: login (optional), credential probe, refresh, and provider smoke
+    /// 验证登录、凭据、刷新和服务商连接
     AuthTest {
         /// Run the provider login flow before validation (interactive/browser-based)
         #[arg(long)]
@@ -555,13 +547,13 @@ pub(crate) enum Command {
         coverage_limit: usize,
     },
 
-    /// Save or restore the current set of open jcode windows across a system reboot
+    /// 保存或恢复重启前打开的 JCode 窗口
     Restart {
         #[command(subcommand)]
         action: RestartCommand,
     },
 
-    /// Show a live macOS menu bar indicator with running/streaming session counts
+    /// 在 macOS 菜单栏显示运行会话数量
     #[command(alias = "menu-bar", alias = "statusbar")]
     Menubar {
         /// Print the current counts once as text and exit (no menu bar item)
@@ -600,35 +592,35 @@ pub(crate) enum Command {
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum TelemetryCommand {
-    /// Show the current telemetry state without creating an anonymous ID
+    /// 查看遥测状态，不创建匿名 ID
     Status {
         /// Emit JSON instead of human-readable text
         #[arg(long)]
         json: bool,
     },
-    /// Enable anonymous usage telemetry
+    /// 启用匿名使用统计
     Enable,
-    /// Disable all telemetry persistently
+    /// 永久禁用全部遥测
     Disable,
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum AccountCommand {
-    /// Open browser-based device authorization and wait for plan activation
+    /// 在浏览器完成设备授权并等待套餐激活
     Login {
         /// Do not open a browser automatically; print the public approval URL instead
         #[arg(long, alias = "headless")]
         no_browser: bool,
     },
-    /// Show canonical account, plan, and usage status from /v1/me
+    /// 查看账户、套餐及用量状态
     Status {
         /// Emit JSON instead of human-readable output
         #[arg(long)]
         json: bool,
     },
-    /// Open the public Jcode account management page
+    /// 打开 JCode 账户管理页
     Manage,
-    /// Revoke the current key when reachable, then securely clear local state
+    /// 撤销当前密钥并清理本地登录状态
     Logout,
 }
 
@@ -639,7 +631,7 @@ pub(crate) enum ServerCommand {
     #[command(hide = true)]
     Stdio,
 
-    /// Start the background server if it is not already running.
+    /// 启动后台服务器（若尚未运行）
     Start {
         /// Emit JSON instead of human-readable text
         #[arg(long)]
@@ -650,10 +642,7 @@ pub(crate) enum ServerCommand {
     #[command(hide = true)]
     Keepalive,
 
-    /// Pin the shared server channel to an installed version.
-    ///
-    /// Defaults to the active `current` version. This only selects the daemon's
-    /// binary; run `jcode server reload` separately to apply it.
+    /// 为共享服务器固定已安装版本；随后用 server reload 应用
     Promote {
         /// Installed version to promote (defaults to the current channel)
         version: Option<String>,
@@ -663,13 +652,7 @@ pub(crate) enum ServerCommand {
         json: bool,
     },
 
-    /// Gracefully reload the running background server onto the newest binary.
-    ///
-    /// This is the preferred way to pick up an upgrade: the daemon hands its
-    /// live sessions off to a freshly exec'd server (the same path `/reload`
-    /// uses), so headless/swarm work is preserved instead of being killed. If
-    /// no server is running, this is a no-op. Use `server stop --force` only
-    /// when you need to hard-retire a wedged daemon.
+    /// 平滑切换到新程序，保留活动会话；未运行时不执行操作
     Reload {
         /// Reload even if the running server is already on the newest binary.
         #[arg(long)]
@@ -680,12 +663,7 @@ pub(crate) enum ServerCommand {
         json: bool,
     },
 
-    /// Stop the running background server and clear its socket.
-    ///
-    /// Prefer `server reload` after an upgrade; it preserves live sessions.
-    /// `stop` terminates the daemon (SIGTERM, escalating to SIGKILL), which
-    /// drops any in-flight headless/swarm sessions, so it requires `--force`
-    /// as a deliberate acknowledgement.
+    /// 停止后台服务器并清理连接端点
     Stop {
         /// Confirm that terminating the daemon (and dropping live sessions) is intended.
         #[arg(long)]

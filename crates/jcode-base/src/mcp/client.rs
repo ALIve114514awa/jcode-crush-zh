@@ -32,6 +32,32 @@ pub struct McpHandle {
 /// Default reply timeout when a server config does not set `timeout_secs`.
 pub const DEFAULT_MCP_REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
+struct PendingRequest {
+    pending: Arc<Mutex<HashMap<u64, oneshot::Sender<JsonRpcResponse>>>>,
+    writer: mpsc::Sender<String>,
+    id: u64,
+    armed: bool,
+}
+
+impl Drop for PendingRequest {
+    fn drop(&mut self) {
+        if !self.armed {
+            return;
+        }
+        let pending = self.pending.clone();
+        let writer = self.writer.clone();
+        let id = self.id;
+        if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+            runtime.spawn(async move {
+                if pending.lock().await.remove(&id).is_some() {
+                    let notification = serde_json::json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":id,"reason":"Caller cancelled or request timed out"}});
+                    let _ = writer.try_send(notification.to_string() + "\n");
+                }
+            });
+        }
+    }
+}
+
 /// Resolve the per-request reply timeout for a server config.
 pub fn request_timeout_for(config: &McpServerConfig) -> std::time::Duration {
     config
@@ -56,13 +82,17 @@ impl McpHandle {
             pending.insert(id, tx);
         }
 
+        let mut guard = PendingRequest {
+            pending: self.pending.clone(),
+            writer: self.writer_tx.clone(),
+            id,
+            armed: true,
+        };
         let msg = serde_json::to_string(&request)? + "\n";
-        self.writer_tx
-            .send(msg)
-            .await
-            .context("Failed to send request")?;
-
-        let response = tokio::time::timeout(self.request_timeout, rx)
+        let response = tokio::time::timeout(self.request_timeout, async {
+            self.writer_tx.send(msg).await.context("Failed to send request")?;
+            rx.await.with_context(|| format!("MCP server '{}' exited (stdout closed)", self.name))
+        })
             .await
             .with_context(|| {
                 format!(
@@ -70,8 +100,8 @@ impl McpHandle {
                     self.request_timeout.as_secs(),
                     self.name
                 )
-            })?
-            .with_context(|| format!("MCP server '{}' exited (stdout closed)", self.name))?;
+            })??;
+        guard.armed = false;
 
         if let Some(err) = &response.error {
             anyhow::bail!("MCP error {}: {}", err.code, err.message);
@@ -163,10 +193,22 @@ impl McpClient {
         working_dir: Option<&std::path::Path>,
     ) -> Result<Self> {
         let working_dir = working_dir.filter(|dir| dir.is_dir());
-        crate::logging::info(&format!(
-            "MCP: Connecting to '{}' ({} {:?}) cwd={:?}",
-            name, config.command, config.args, working_dir
-        ));
+        let remote = config.is_remote();
+        let bridged;
+        let config = if remote {
+            bridged = super::remote::bridge_config(config)?;
+            crate::logging::info(&format!(
+                "MCP: Connecting to '{}' through the remote adapter cwd={:?}",
+                name, working_dir
+            ));
+            &bridged
+        } else {
+            crate::logging::info(&format!(
+                "MCP: Connecting to '{}' ({} {:?}) cwd={:?}",
+                name, config.command, config.args, working_dir
+            ));
+            config
+        };
 
         // Credentials must be opted into an MCP server explicitly through its
         // config. The long-lived jcode daemon contains provider credentials in
@@ -178,10 +220,14 @@ impl McpClient {
         let mut command = Command::new(&config.command);
         command
             .args(&config.args)
+            .env_clear()
             .envs(&env)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+            .stderr(Stdio::piped())
+            .kill_on_drop(true);
+        #[cfg(windows)]
+        command.creation_flags(0x08000000);
         if let Some(dir) = working_dir {
             command.current_dir(dir);
         }
@@ -204,10 +250,17 @@ impl McpClient {
                     Ok(0) => break,
                     Ok(_) => {
                         let trimmed = line.trim();
-                        if !trimmed.is_empty() {
+                        if !trimmed.is_empty() && !remote {
                             crate::logging::warn(&format!(
                                 "MCP [{}] stderr: {}",
                                 server_name, trimmed
+                            ));
+                        } else if !trimmed.is_empty() {
+                            // Adapter logs can include expanded authentication
+                            // headers and URLs; do not persist their contents.
+                            crate::logging::debug(&format!(
+                                "MCP [{}]: remote adapter status message",
+                                server_name
                             ));
                         }
                     }
@@ -293,10 +346,20 @@ impl McpClient {
 
         let mut client = Self { handle, child };
 
+        // Browser authorization needs a longer initial budget than an ordinary
+        // tool call. Keep the configured request timeout after initialization.
+        let request_timeout = client.handle.request_timeout;
+        if remote {
+            client.handle.request_timeout =
+                std::time::Duration::from_secs(config.timeout_secs.unwrap_or(120).max(1));
+        }
+
         client
-            .initialize()
+            .initialize(if remote { "2025-11-25" } else { "2024-11-05" })
             .await
             .with_context(|| format!("MCP server '{}' failed to initialize", name))?;
+
+        client.handle.request_timeout = request_timeout;
 
         client
             .handle
@@ -319,9 +382,9 @@ impl McpClient {
     }
 
     /// Initialize the MCP connection
-    async fn initialize(&mut self) -> Result<()> {
+    async fn initialize(&mut self, protocol_version: &str) -> Result<()> {
         let params = InitializeParams {
-            protocol_version: "2024-11-05".to_string(),
+            protocol_version: protocol_version.to_string(),
             capabilities: ClientCapabilities::default(),
             client_info: ClientInfo {
                 name: "jcode".to_string(),

@@ -60,7 +60,7 @@ impl LoginPickerItem {
             self.status_label(),
             self.method_detail,
             if self.provider.recommended {
-                "recommended"
+                "推荐"
             } else {
                 ""
             }
@@ -74,9 +74,9 @@ impl LoginPickerItem {
 
     fn status_label(&self) -> &'static str {
         match self.auth_state {
-            AuthState::Available => "configured",
-            AuthState::Expired => "needs attention",
-            AuthState::NotConfigured => "not set up",
+            AuthState::Available => "已配置",
+            AuthState::Expired => "需要处理",
+            AuthState::NotConfigured => "未配置",
         }
     }
 
@@ -294,15 +294,15 @@ impl LoginPicker {
             .title(format!(" {} ", self.title))
             .title_bottom(Line::from(vec![
                 hotkey(" Enter "),
-                Span::styled(" login  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 登录  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Up/Down "),
-                Span::styled(" navigate  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 移动  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Click "),
-                Span::styled(" select  ", Style::default().fg(MUTED_DARK)),
-                hotkey(" type "),
-                Span::styled(" filter  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 选择  ", Style::default().fg(MUTED_DARK)),
+                hotkey(" 输入 "),
+                Span::styled(" 筛选  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Esc "),
-                Span::styled(" clear / close ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 清空/关闭 ", Style::default().fg(MUTED_DARK)),
             ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(PANEL_BORDER));
@@ -334,9 +334,9 @@ impl LoginPicker {
         self.render_detail_pane(frame, body[1]);
 
         let footer = Paragraph::new(Line::from(vec![
-            Span::styled("Tip ", Style::default().fg(MUTED_DARK)),
+            Span::styled("提示 ", Style::default().fg(MUTED_DARK)),
             Span::styled(
-                "Move or click through providers on the left; the focused provider expands on the right with setup and account details.",
+                "在左侧移动或点击选择服务商，右侧显示配置和账户详情。",
                 Style::default().fg(MUTED),
             ),
         ]));
@@ -346,7 +346,7 @@ impl LoginPicker {
     fn render_header(&self, frame: &mut Frame, area: Rect) {
         let block = Block::default()
             .title(Span::styled(
-                " Login overview ",
+                " 登录概览 ",
                 Style::default().fg(Color::White).bold(),
             ))
             .borders(Borders::ALL)
@@ -357,10 +357,10 @@ impl LoginPicker {
 
         let lines = vec![
             Line::from(vec![
-                Span::styled("Filter ", Style::default().fg(MUTED_DARK)),
+                Span::styled("筛选 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     if self.filter.is_empty() {
-                        "type provider, status, or auth method".to_string()
+                        "输入服务商、状态或认证方式".to_string()
                     } else {
                         self.filter.clone()
                     },
@@ -371,27 +371,31 @@ impl LoginPicker {
                     },
                 ),
                 Span::styled(
-                    format!("  ·  {} results", self.filtered.len()),
+                    format!("  ·  {} 项结果", self.filtered.len()),
                     Style::default().fg(MUTED_DARK),
                 ),
             ]),
             Line::from(vec![
                 metric_span(
-                    "configured",
+                    "已配置",
                     self.summary.ready_count,
                     Color::Rgb(111, 214, 181),
                 ),
                 Span::raw("  "),
                 metric_span(
-                    "attention",
+                    "需处理",
                     self.summary.attention_count,
                     Color::Rgb(255, 196, 112),
                 ),
                 Span::raw("  "),
-                metric_span("setup", self.summary.setup_count, Color::Rgb(160, 168, 188)),
+                metric_span(
+                    "未配置",
+                    self.summary.setup_count,
+                    Color::Rgb(160, 168, 188),
+                ),
                 Span::raw("  "),
                 metric_span(
-                    "recommended",
+                    "推荐",
                     self.summary.recommended_count,
                     Color::Rgb(196, 170, 255),
                 ),
@@ -403,13 +407,9 @@ impl LoginPicker {
 
     fn render_provider_list(&mut self, frame: &mut Frame, area: Rect) {
         let title = if self.filtered.is_empty() {
-            " Providers ".to_string()
+            " 服务商 ".to_string()
         } else {
-            format!(
-                " Providers ({}/{}) ",
-                self.selected + 1,
-                self.filtered.len()
-            )
+            format!(" 服务商（{}/{}）", self.selected + 1, self.filtered.len())
         };
         let block = Block::default()
             .title(Span::styled(
@@ -430,11 +430,11 @@ impl LoginPicker {
         let mut lines = Vec::new();
         if self.filtered.is_empty() {
             lines.push(Line::from(Span::styled(
-                "No matching providers.",
+                "没有匹配的服务商。",
                 Style::default().fg(Color::Gray).italic(),
             )));
             lines.push(Line::from(Span::styled(
-                "Try `openai`, `oauth`, `configured`, or `setup`.",
+                "试试 openai、oauth、已配置或未配置。",
                 Style::default().fg(MUTED),
             )));
         } else {
@@ -473,7 +473,7 @@ impl LoginPicker {
         let title = self
             .selected_item()
             .map(|item| format!(" {} ", item.provider.display_name))
-            .unwrap_or_else(|| " Details ".to_string());
+            .unwrap_or_else(|| " 详情 ".to_string());
         let block = Block::default()
             .title(Span::styled(
                 title,
@@ -487,7 +487,7 @@ impl LoginPicker {
 
         let Some(item) = self.selected_item() else {
             frame.render_widget(
-                Paragraph::new("No provider selected").style(Style::default().fg(Color::DarkGray)),
+                Paragraph::new("尚未选择服务商").style(Style::default().fg(Color::DarkGray)),
                 inner,
             );
             return;
@@ -510,29 +510,26 @@ impl LoginPicker {
                 ),
             ]),
             Line::from(vec![
-                Span::styled("Provider ", Style::default().fg(MUTED_DARK)),
+                Span::styled("服务商 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     item.provider.display_name.to_string(),
                     provider_style(item.provider.id),
                 ),
                 if item.provider.recommended {
-                    Span::styled(
-                        "  recommended",
-                        Style::default().fg(Color::Rgb(196, 170, 255)),
-                    )
+                    Span::styled("  推荐", Style::default().fg(Color::Rgb(196, 170, 255)))
                 } else {
                     Span::raw("")
                 },
             ]),
             Line::from(vec![
-                Span::styled("Login command ", Style::default().fg(MUTED_DARK)),
+                Span::styled("登录命令 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     format!("/login {}", item.provider.id),
                     Style::default().fg(Color::White),
                 ),
             ]),
             Line::from(vec![Span::styled(
-                "Authentication",
+                "认证方式",
                 Style::default().fg(MUTED_DARK).bold(),
             )]),
             Line::from(vec![Span::styled(
@@ -543,7 +540,7 @@ impl LoginPicker {
             )]),
             Line::from(""),
             Line::from(vec![Span::styled(
-                "Detected setup",
+                "检测到的配置",
                 Style::default().fg(MUTED_DARK).bold(),
             )]),
             Line::from(vec![Span::styled(
@@ -552,7 +549,7 @@ impl LoginPicker {
             )]),
             Line::from(""),
             Line::from(vec![Span::styled(
-                "What you need",
+                "所需信息",
                 Style::default().fg(MUTED_DARK).bold(),
             )]),
             Line::from(vec![Span::styled(
@@ -561,16 +558,16 @@ impl LoginPicker {
             )]),
             Line::from(""),
             Line::from(vec![
-                Span::styled("Aliases ", Style::default().fg(MUTED_DARK)),
+                Span::styled("别名 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(aliases, Style::default().fg(MUTED)),
             ]),
             Line::from(vec![
-                Span::styled("Numbered accounts ", Style::default().fg(MUTED_DARK)),
+                Span::styled("账户数量 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     if provider_supports_named_accounts(item.provider) {
                         "supported"
                     } else {
-                        "not used for this provider"
+                        "此服务商不使用此项"
                     },
                     Style::default().fg(MUTED),
                 ),
@@ -585,7 +582,7 @@ impl LoginPicker {
 
         lines.push(Line::from(""));
         lines.push(Line::from(vec![Span::styled(
-            "Press Enter to begin login.",
+            "按 Enter 开始登录。",
             Style::default().fg(Color::Rgb(170, 210, 255)),
         )]));
 
@@ -642,11 +639,11 @@ fn provider_style(provider_id: &str) -> Style {
 fn auth_kind_color(kind: &str) -> Color {
     match kind {
         "OAuth" => Color::Rgb(129, 184, 255),
-        "API key" => Color::Rgb(182, 154, 255),
-        "device code" => Color::Rgb(111, 214, 181),
+        "API 密钥" => Color::Rgb(182, 154, 255),
+        "设备验证码" => Color::Rgb(111, 214, 181),
         "CLI" => Color::Rgb(131, 215, 255),
-        "API key / CLI" => Color::Rgb(229, 187, 111),
-        "local endpoint" => Color::Rgb(111, 214, 181),
+        "API 密钥 / CLI" => Color::Rgb(229, 187, 111),
+        "本地地址" => Color::Rgb(111, 214, 181),
         _ => Color::Rgb(180, 190, 220),
     }
 }
@@ -665,11 +662,11 @@ fn account_detail_lines(provider: LoginProviderDescriptor) -> Vec<Line<'static>>
         crate::provider_catalog::LoginProviderTarget::OpenAi => openai_account_lines(),
         _ => vec![
             Line::from(vec![Span::styled(
-                "Accounts",
+                "账户",
                 Style::default().fg(MUTED_DARK).bold(),
             )]),
             Line::from(vec![Span::styled(
-                "This provider is usually configured as a single credential or env-based login.",
+                "此服务商通常使用单一凭据或环境变量登录。",
                 Style::default().fg(MUTED),
             )]),
         ],
@@ -682,17 +679,17 @@ fn claude_account_lines() -> Vec<Line<'static>> {
     let now_ms = chrono::Utc::now().timestamp_millis();
 
     let mut lines = vec![Line::from(vec![Span::styled(
-        "Accounts",
+        "账户",
         Style::default().fg(MUTED_DARK).bold(),
     )])];
 
     if accounts.is_empty() {
         lines.push(Line::from(vec![Span::styled(
-            "No saved Claude accounts yet.",
+            "尚未保存 Claude 账户。",
             Style::default().fg(MUTED),
         )]));
         lines.push(Line::from(vec![
-            Span::styled("Add more later with ", Style::default().fg(MUTED_DARK)),
+            Span::styled("稍后可添加更多账户：", Style::default().fg(MUTED_DARK)),
             Span::styled("/account claude add", Style::default().fg(Color::White)),
         ]));
         return lines;
@@ -700,26 +697,26 @@ fn claude_account_lines() -> Vec<Line<'static>> {
 
     let active = active_label.unwrap_or_else(crate::auth::claude::primary_account_label);
     lines.push(Line::from(vec![Span::styled(
-        format!("{} saved · active: {}", accounts.len(), active),
+        format!("已保存 {} 个 · 当前：{}", accounts.len(), active),
         Style::default().fg(MUTED),
     )]));
 
     for account in accounts.iter().take(6) {
         let is_active = active == account.label;
         let account_status = if account.expires > now_ms {
-            "valid"
+            "有效"
         } else {
-            "expired"
+            "已过期"
         };
         let plan = account
             .subscription_type
             .as_deref()
-            .unwrap_or("subscription unknown");
+            .unwrap_or("订阅类型未知");
         let email = account
             .email
             .as_deref()
             .map(mask_email)
-            .unwrap_or_else(|| "email unknown".to_string());
+            .unwrap_or_else(|| "邮箱未知".to_string());
         lines.push(Line::from(vec![
             Span::styled(
                 if is_active { "● " } else { "○ " },
@@ -739,13 +736,13 @@ fn claude_account_lines() -> Vec<Line<'static>> {
 
     if accounts.len() > 6 {
         lines.push(Line::from(vec![Span::styled(
-            format!("+{} more accounts", accounts.len() - 6),
+            format!("另有 {} 个账户", accounts.len() - 6),
             Style::default().fg(MUTED_DARK),
         )]));
     }
 
     lines.push(Line::from(vec![
-        Span::styled("Manage with ", Style::default().fg(MUTED_DARK)),
+        Span::styled("管理命令：", Style::default().fg(MUTED_DARK)),
         Span::styled("/account claude", Style::default().fg(Color::White)),
     ]));
     lines
@@ -757,17 +754,17 @@ fn openai_account_lines() -> Vec<Line<'static>> {
     let now_ms = chrono::Utc::now().timestamp_millis();
 
     let mut lines = vec![Line::from(vec![Span::styled(
-        "Accounts",
+        "账户",
         Style::default().fg(MUTED_DARK).bold(),
     )])];
 
     if accounts.is_empty() {
         lines.push(Line::from(vec![Span::styled(
-            "No saved OpenAI accounts yet.",
+            "尚未保存 OpenAI 账户。",
             Style::default().fg(MUTED),
         )]));
         lines.push(Line::from(vec![
-            Span::styled("Add more later with ", Style::default().fg(MUTED_DARK)),
+            Span::styled("稍后可添加更多账户：", Style::default().fg(MUTED_DARK)),
             Span::styled("/account openai add", Style::default().fg(Color::White)),
         ]));
         return lines;
@@ -775,26 +772,23 @@ fn openai_account_lines() -> Vec<Line<'static>> {
 
     let active = active_label.unwrap_or_else(crate::auth::codex::primary_account_label);
     lines.push(Line::from(vec![Span::styled(
-        format!("{} saved · active: {}", accounts.len(), active),
+        format!("已保存 {} 个 · 当前：{}", accounts.len(), active),
         Style::default().fg(MUTED),
     )]));
 
     for account in accounts.iter().take(6) {
         let is_active = active == account.label;
         let account_status = match account.expires_at {
-            Some(expires_at) if expires_at > now_ms => "valid",
-            Some(_) => "expired",
-            None => "valid",
+            Some(expires_at) if expires_at > now_ms => "有效",
+            Some(_) => "已过期",
+            None => "有效",
         };
         let email = account
             .email
             .as_deref()
             .map(mask_email)
-            .unwrap_or_else(|| "email unknown".to_string());
-        let account_id = account
-            .account_id
-            .as_deref()
-            .unwrap_or("account id unknown");
+            .unwrap_or_else(|| "邮箱未知".to_string());
+        let account_id = account.account_id.as_deref().unwrap_or("账户 ID 未知");
         lines.push(Line::from(vec![
             Span::styled(
                 if is_active { "● " } else { "○ " },
@@ -814,13 +808,13 @@ fn openai_account_lines() -> Vec<Line<'static>> {
 
     if accounts.len() > 6 {
         lines.push(Line::from(vec![Span::styled(
-            format!("+{} more accounts", accounts.len() - 6),
+            format!("另有 {} 个账户", accounts.len() - 6),
             Style::default().fg(MUTED_DARK),
         )]));
     }
 
     lines.push(Line::from(vec![
-        Span::styled("Manage with ", Style::default().fg(MUTED_DARK)),
+        Span::styled("管理命令：", Style::default().fg(MUTED_DARK)),
         Span::styled("/account openai", Style::default().fg(Color::White)),
     ]));
     lines
@@ -845,17 +839,26 @@ fn mask_email(email: &str) -> String {
 }
 
 fn truncate_with_ellipsis(input: &str, width: usize) -> String {
+    use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
     if width == 0 {
         return String::new();
     }
-    let chars: Vec<char> = input.chars().collect();
-    if chars.len() <= width {
+    if input.width() <= width {
         return input.to_string();
     }
     if width <= 3 {
         return ".".repeat(width);
     }
-    let mut out: String = chars.into_iter().take(width - 3).collect();
+    let mut out = String::new();
+    let mut used = 0;
+    for ch in input.chars() {
+        let cells = ch.width().unwrap_or(0);
+        if used + cells > width - 3 {
+            break;
+        }
+        out.push(ch);
+        used += cells;
+    }
     out.push_str("...");
     out
 }
@@ -888,9 +891,7 @@ mod tests {
         let area = buffer.area;
         let mut out = String::new();
         for y in area.y..area.y + area.height {
-            for x in area.x..area.x + area.width {
-                out.push_str(buffer[(x, y)].symbol());
-            }
+            out.push_str(&crate::tui::test_harness::buffer_line_text(buffer, y));
             out.push('\n');
         }
         out
@@ -899,7 +900,7 @@ mod tests {
     #[test]
     fn test_login_picker_preserves_underlying_background_outside_panels() {
         let mut picker = LoginPicker::with_summary(
-            " Login ",
+            " 登录 ",
             vec![LoginPickerItem::new(
                 1,
                 crate::provider_catalog::OPENAI_LOGIN_PROVIDER,
@@ -936,7 +937,7 @@ mod tests {
     #[test]
     fn test_login_picker_mouse_click_selects_visible_provider() {
         let mut picker = LoginPicker::with_summary(
-            " Login ",
+            " 登录 ",
             vec![
                 LoginPickerItem::new(
                     1,
@@ -993,7 +994,7 @@ mod tests {
                 let method_detail =
                     format!("state-space detail for {} {auth_state:?}", provider.id);
                 let mut picker = LoginPicker::with_summary(
-                    " Login ",
+                    " 登录 ",
                     vec![LoginPickerItem::new(
                         index + 1,
                         provider,
@@ -1021,7 +1022,7 @@ mod tests {
                     provider.auth_kind.label(),
                     provider.menu_detail,
                     method_detail.as_str(),
-                    "Press Enter to begin login.",
+                    "按 Enter 开始登录。",
                 ] {
                     assert!(
                         text.contains(expected),

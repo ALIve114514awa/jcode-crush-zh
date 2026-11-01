@@ -3,6 +3,7 @@
 //! Comprehensive testing infrastructure for autonomous TUI testing.
 //! Provides deterministic clock, event replay, log bundles, and headless rendering.
 use serde::{Deserialize, Serialize};
+
 use std::collections::VecDeque;
 use std::fs::{self, File};
 use std::io::Write;
@@ -10,6 +11,19 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock, RwLock};
 use std::time::Duration;
+
+/// Read a terminal row as text, omitting cells hidden by wide CJK/emoji glyphs.
+/// A plain concatenation of every cell inserts artificial spaces into Chinese.
+pub fn buffer_line_text(buffer: &ratatui::buffer::Buffer, y: u16) -> String {
+    let mut line = String::new();
+    let mut x = buffer.area.x;
+    while x < buffer.area.right() {
+        let symbol = buffer[(x, y)].symbol();
+        line.push_str(symbol);
+        x = x.saturating_add(unicode_width::UnicodeWidthStr::width(symbol).max(1) as u16);
+    }
+    line
+}
 
 fn lock_unpoisoned<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     mutex
@@ -853,6 +867,17 @@ pub fn strings_equal_normalized(a: &str, b: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn buffer_text_keeps_chinese_emoji_and_combining_marks() {
+        use ratatui::{buffer::Buffer, layout::Rect, style::Style};
+        let mut buffer = Buffer::empty(Rect::new(3, 2, 16, 1));
+        let text = "中文 😀 e\u{301}";
+        buffer.set_string(3, 2, text, Style::default());
+        let row = buffer_line_text(&buffer, 2);
+        assert_eq!(row.trim_end(), text);
+        assert_eq!(unicode_width::UnicodeWidthStr::width(row.as_str()), 16);
+    }
 
     #[test]
     fn test_clock_advance() {

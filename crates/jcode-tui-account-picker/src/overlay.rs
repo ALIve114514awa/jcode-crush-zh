@@ -271,7 +271,7 @@ impl AccountPicker {
             }
         }
 
-        let mut spans = vec![Span::styled("Providers ", Style::default().fg(MUTED_DARK))];
+        let mut spans = vec![Span::styled("服务商 ", Style::default().fg(MUTED_DARK))];
         let mut first = true;
         for provider_id in seen {
             let Some((label, accounts, actions)) = stats.get(&provider_id) else {
@@ -294,10 +294,7 @@ impl AccountPicker {
             spans.push(Span::styled(summary, provider_style(&provider_id)));
         }
         if first {
-            spans.push(Span::styled(
-                "No providers available",
-                Style::default().fg(MUTED),
-            ));
+            spans.push(Span::styled("没有可用的服务商", Style::default().fg(MUTED)));
         }
         Line::from(spans)
     }
@@ -406,15 +403,15 @@ impl AccountPicker {
             .title(format!(" {} ", self.title))
             .title_bottom(Line::from(vec![
                 hotkey(" Enter "),
-                Span::styled(" run  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 执行  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Up/Down "),
-                Span::styled(" navigate  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 移动  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Click "),
-                Span::styled(" select  ", Style::default().fg(MUTED_DARK)),
-                hotkey(" type "),
-                Span::styled(" filter  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 选择  ", Style::default().fg(MUTED_DARK)),
+                hotkey(" 输入 "),
+                Span::styled(" 筛选  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Esc "),
-                Span::styled(" clear / close ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 清空/关闭 ", Style::default().fg(MUTED_DARK)),
             ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(PANEL_BORDER));
@@ -446,9 +443,9 @@ impl AccountPicker {
         self.render_detail_pane(frame, body[1]);
 
         let footer = Paragraph::new(Line::from(vec![
-            Span::styled("Focus ", Style::default().fg(MUTED_DARK)),
+            Span::styled("焦点 ", Style::default().fg(MUTED_DARK)),
             Span::styled(
-                "saved accounts stay surfaced here; click actions to focus them, use Left/Right to jump provider groups, or use `/account <provider> settings` for the full text view.",
+                "这里显示已保存账户；点击选择操作，左右键切换服务商，/account <provider> settings 查看完整设置。",
                 Style::default().fg(MUTED),
             ),
         ]));
@@ -458,7 +455,7 @@ impl AccountPicker {
     fn render_header(&self, frame: &mut Frame, area: Rect) {
         let block = Block::default()
             .title(Span::styled(
-                " Overview ",
+                " 概览 ",
                 Style::default().fg(Color::White).bold(),
             ))
             .borders(Borders::ALL)
@@ -469,10 +466,10 @@ impl AccountPicker {
 
         let lines = vec![
             Line::from(vec![
-                Span::styled("Filter ", Style::default().fg(MUTED_DARK)),
+                Span::styled("筛选 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     if self.filter.is_empty() {
-                        "type provider or account name".to_string()
+                        "输入服务商或账户名称".to_string()
                     } else {
                         self.filter.clone()
                     },
@@ -483,7 +480,7 @@ impl AccountPicker {
                     },
                 ),
                 Span::styled(
-                    format!("  -  {} results", self.filtered.len()),
+                    format!("  -  {} 项结果", self.filtered.len()),
                     Style::default().fg(MUTED_DARK),
                 ),
             ]),
@@ -497,10 +494,10 @@ impl AccountPicker {
 
     fn render_action_list(&mut self, frame: &mut Frame, area: Rect) {
         let title = if self.filtered.is_empty() {
-            " Providers & Quick Actions ".to_string()
+            " 服务商与快捷操作 ".to_string()
         } else {
             format!(
-                " Providers & Quick Actions ({}/{}) ",
+                " 服务商与快捷操作（{}/{}）",
                 self.selected + 1,
                 self.filtered.len()
             )
@@ -524,11 +521,11 @@ impl AccountPicker {
         let mut lines = Vec::new();
         if self.filtered.is_empty() {
             lines.push(Line::from(Span::styled(
-                "No matching account or provider actions.",
+                "没有匹配的账户或操作。",
                 Style::default().fg(Color::Gray).italic(),
             )));
             lines.push(Line::from(Span::styled(
-                "Try `openai`, `claude`, an account label, `login`, or `default`.",
+                "试试 openai、claude、账户名称、login 或 default。",
                 Style::default().fg(MUTED),
             )));
         } else {
@@ -580,7 +577,7 @@ impl AccountPicker {
         let title = self
             .selected_item()
             .map(|item| format!(" {} ", item.provider_label))
-            .unwrap_or_else(|| " Details ".to_string());
+            .unwrap_or_else(|| " 详情 ".to_string());
         let block = Block::default()
             .title(Span::styled(
                 title,
@@ -594,7 +591,7 @@ impl AccountPicker {
 
         let Some(item) = self.selected_item() else {
             frame.render_widget(
-                Paragraph::new("No action selected").style(Style::default().fg(Color::DarkGray)),
+                Paragraph::new("尚未选择操作").style(Style::default().fg(Color::DarkGray)),
                 inner,
             );
             return;
@@ -605,7 +602,7 @@ impl AccountPicker {
         if !item.details.is_empty() {
             let mut lines = vec![
                 Line::styled(item.title.clone(), Style::default().fg(Color::White).bold()),
-                Line::from("Enter: run action."),
+                Line::from("Enter：执行操作。"),
                 Line::from(""),
             ];
             for (label, value) in &item.details {
@@ -655,14 +652,14 @@ impl AccountPicker {
 
         let mut lines = vec![
             Line::from(vec![
-                Span::styled("Provider ", Style::default().fg(MUTED_DARK)),
+                Span::styled("服务商 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     item.provider_label.clone(),
                     provider_style(&item.provider_id),
                 ),
             ]),
             Line::from(vec![
-                Span::styled("Saved accounts ", Style::default().fg(MUTED_DARK)),
+                Span::styled("已保存账户 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     account_count_summary(account_items.len()),
                     Style::default().fg(Color::White).bold(),
@@ -670,21 +667,21 @@ impl AccountPicker {
             ]),
             Line::from(""),
             Line::from(vec![Span::styled(
-                "Quick switch",
+                "快速切换",
                 Style::default().fg(MUTED_DARK).bold(),
             )]),
         ];
 
         if account_items.is_empty() {
             lines.push(Line::from(vec![Span::styled(
-                "No saved accounts for this provider yet.",
+                "此服务商尚未保存账户。",
                 Style::default().fg(MUTED),
             )]));
         } else {
             for account in &account_items {
                 let is_selected = account.title == item.title;
                 let bullet = if account_is_active(account) { "*" } else { "o" };
-                let note = if is_selected { "  [selected]" } else { "" };
+                let note = if is_selected { "  [已选择]" } else { "" };
                 lines.push(Line::from(vec![
                     Span::styled(
                         format!("{} ", bullet),
@@ -718,7 +715,7 @@ impl AccountPicker {
 
         lines.push(Line::from(""));
         lines.push(Line::from(vec![Span::styled(
-            "Selected action",
+            "所选操作",
             Style::default().fg(MUTED_DARK).bold(),
         )]));
         lines.push(Line::from(vec![
@@ -732,7 +729,7 @@ impl AccountPicker {
         )]));
         lines.push(Line::from(""));
         lines.push(Line::from(vec![Span::styled(
-            "Runs",
+            "执行命令",
             Style::default().fg(MUTED_DARK).bold(),
         )]));
         lines.push(Line::from(vec![Span::styled(
@@ -747,7 +744,7 @@ impl AccountPicker {
         if !secondary_items.is_empty() {
             lines.push(Line::from(""));
             lines.push(Line::from(vec![Span::styled(
-                "Other controls",
+                "其他操作",
                 Style::default().fg(MUTED_DARK).bold(),
             )]));
             for related in secondary_items {
@@ -763,7 +760,7 @@ impl AccountPicker {
 
         lines.push(Line::from(""));
         lines.push(Line::from(vec![Span::styled(
-            "Press Enter to run this action.",
+            "按 Enter 执行此操作。",
             Style::default().fg(Color::Rgb(170, 210, 255)),
         )]));
 
@@ -801,7 +798,7 @@ impl AccountPicker {
         }
 
         Line::from(vec![Span::styled(
-            format!("{} actions available", self.filtered.len()),
+            format!("{} 项可用操作", self.filtered.len()),
             Style::default().fg(MUTED),
         )])
     }
@@ -809,22 +806,19 @@ impl AccountPicker {
     fn defaults_line(&self) -> Line<'static> {
         let Some(summary) = &self.summary else {
             return Line::from(vec![Span::styled(
-                "Type to narrow actions by provider, account label, or setting.",
+                "输入服务商、账户名称或设置以筛选操作。",
                 Style::default().fg(MUTED),
             )]);
         };
 
         let provider = summary.default_provider.as_deref().unwrap_or("auto");
-        let model = summary
-            .default_model
-            .as_deref()
-            .unwrap_or("provider default");
+        let model = summary.default_model.as_deref().unwrap_or("服务商默认");
 
         Line::from(vec![
-            Span::styled("Defaults ", Style::default().fg(MUTED_DARK)),
-            Span::styled("provider ", Style::default().fg(MUTED_DARK)),
+            Span::styled("默认设置 ", Style::default().fg(MUTED_DARK)),
+            Span::styled("服务商 ", Style::default().fg(MUTED_DARK)),
             Span::styled(provider.to_string(), Style::default().fg(Color::White)),
-            Span::styled("  -  model ", Style::default().fg(MUTED_DARK)),
+            Span::styled("  -  模型 ", Style::default().fg(MUTED_DARK)),
             Span::styled(model.to_string(), Style::default().fg(Color::White)),
         ])
     }
@@ -883,10 +877,21 @@ mod tests {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend, widgets::Paragraph};
 
+    fn visible_line(buffer: &ratatui::buffer::Buffer, y: u16, left: u16, right: u16) -> String {
+        let mut line = String::new();
+        let mut x = left;
+        while x < right {
+            let symbol = buffer[(x, y)].symbol();
+            line.push_str(symbol);
+            x += unicode_width::UnicodeWidthStr::width(symbol).max(1) as u16;
+        }
+        line
+    }
+
     #[test]
     fn account_usage_details_wrap_without_changing_switch_action() {
         let mut picker = AccountPicker::new(
-            "Accounts",
+            "账户",
             vec![
                 AccountPickerItem::action(
                     "openai",
@@ -906,13 +911,13 @@ mod tests {
                             .into(),
                     ),
                     (
-                        "Lifetime".into(),
+                        "累计".into(),
                         "1234567890 input / 4500000 output tokens (600000 cached input), $12.5000 API-equivalent estimate, not a bill; recorded only; since 2026-09-06 12:34 -07:00"
                             .into(),
                     ),
                     (
-                        "Estimate".into(),
-                        "Not your subscription bill. Recorded Jcode usage only.".into(),
+                        "估算".into(),
+                        "仅统计 JCode 记录的用量，不是订阅账单。".into(),
                     ),
                 ]),
             ],
@@ -923,18 +928,12 @@ mod tests {
             .unwrap();
         let buffer = terminal.backend().buffer();
         let rendered = (1..37)
-            .map(|y| {
-                (1..41)
-                    .map(|x| buffer[(x, y)].symbol())
-                    .collect::<String>()
-                    .trim()
-                    .to_string()
-            })
+            .map(|y| visible_line(buffer, y, 1, 41).trim().to_string())
             .collect::<Vec<_>>()
             .join(" ");
         for expected in [
-            "Today",
-            "Lifetime",
+            "今日",
+            "累计",
             "$1.25",
             "$12.50",
             "1234567890 input",
@@ -969,12 +968,12 @@ mod tests {
     #[test]
     fn test_account_picker_preserves_underlying_background_outside_panels() {
         let mut picker = AccountPicker::new(
-            " Accounts ",
+            " 账户 ",
             vec![AccountPickerItem::action(
                 "openai",
                 "OpenAI",
-                "Add account",
-                "Start login flow",
+                "添加账户",
+                "开始登录",
                 AccountPickerCommand::SubmitInput("/account openai add default".to_string()),
             )],
         );
@@ -1003,19 +1002,19 @@ mod tests {
     #[test]
     fn test_account_picker_mouse_click_selects_visible_action_after_group_header() {
         let mut picker = AccountPicker::new(
-            " Accounts ",
+            " 账户 ",
             vec![
                 AccountPickerItem::action(
                     "openai",
                     "OpenAI",
-                    "Provider settings",
-                    "configured",
+                    "服务商设置",
+                    "已配置",
                     AccountPickerCommand::SubmitInput("/account openai settings".to_string()),
                 ),
                 AccountPickerItem::action(
                     "openai",
                     "OpenAI",
-                    "Login / refresh",
+                    "登录或刷新",
                     "OAuth",
                     AccountPickerCommand::SubmitInput("/account openai login".to_string()),
                 ),
@@ -1062,7 +1061,7 @@ mod tests {
     #[test]
     fn test_prompt_value_command_preview_shows_placeholder() {
         let preview = command_preview(&AccountPickerCommand::PromptValue {
-            prompt: "Enter default model".to_string(),
+            prompt: "输入默认模型".to_string(),
             command_prefix: "/account default-model".to_string(),
             empty_value: Some("clear".to_string()),
             status_notice: "editing".to_string(),
@@ -1075,13 +1074,13 @@ mod tests {
     #[test]
     fn test_account_picker_sorts_switches_before_settings() {
         let picker = AccountPicker::new(
-            " Accounts ",
+            " 账户 ",
             vec![
                 AccountPickerItem::action(
                     "openai",
                     "OpenAI",
-                    "Provider settings",
-                    "configured",
+                    "服务商设置",
+                    "已配置",
                     AccountPickerCommand::SubmitInput("/account openai settings".to_string()),
                 ),
                 AccountPickerItem::action(
@@ -1094,8 +1093,8 @@ mod tests {
                 AccountPickerItem::action(
                     "defaults",
                     "Global",
-                    "Default provider",
-                    "Current: auto",
+                    "默认服务商",
+                    "当前：自动",
                     AccountPickerCommand::PromptValue {
                         prompt: "provider".to_string(),
                         command_prefix: "/account default-provider".to_string(),
@@ -1113,14 +1112,14 @@ mod tests {
             .collect();
 
         assert_eq!(ordered_titles[0], "Switch account `work`");
-        assert_eq!(ordered_titles[1], "Provider settings");
-        assert_eq!(ordered_titles[2], "Default provider");
+        assert_eq!(ordered_titles[1], "服务商设置");
+        assert_eq!(ordered_titles[2], "默认服务商");
     }
 
     #[test]
     fn test_account_picker_left_right_jump_by_provider_group() {
         let mut picker = AccountPicker::new(
-            " Accounts ",
+            " 账户 ",
             vec![
                 AccountPickerItem::action(
                     "claude",
@@ -1132,8 +1131,8 @@ mod tests {
                 AccountPickerItem::action(
                     "claude",
                     "Claude",
-                    "Provider settings",
-                    "configured",
+                    "服务商设置",
+                    "已配置",
                     AccountPickerCommand::SubmitInput("/account claude settings".to_string()),
                 ),
                 AccountPickerItem::action(

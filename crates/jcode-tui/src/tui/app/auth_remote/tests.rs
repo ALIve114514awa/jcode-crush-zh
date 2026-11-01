@@ -621,7 +621,7 @@ fn ssh_inline_picker_status_is_remote_only_and_failure_stays_unknown() {
                     command::ProviderStatus {
                         id: "openai-api".into(),
                         state: crate::auth::AuthState::Available,
-                        method_detail: "API key".into(),
+                        method_detail: "API 密钥".into(),
                     },
                 ],
             })));
@@ -631,7 +631,7 @@ fn ssh_inline_picker_status_is_remote_only_and_failure_stays_unknown() {
             assert!(picker_provider(picker, "openai").is_current);
             assert_eq!(
                 picker_provider(picker, "openai").options[0].api_method,
-                "configured"
+                "已配置"
             );
             assert_eq!(
                 picker_provider(picker, "claude").options[0].api_method,
@@ -643,7 +643,7 @@ fn ssh_inline_picker_status_is_remote_only_and_failure_stays_unknown() {
             );
             let api = picker_provider(picker, "openai-api");
             assert!(api.is_current);
-            assert_eq!(api.options[0].provider, "API key");
+            assert_eq!(api.options[0].provider, "API 密钥");
             assert!(api.options[0].detail.contains("Remote-host setup required"));
             assert!(!api.options[0].detail.contains("Browser approval opens"));
             assert!(

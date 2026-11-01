@@ -1320,19 +1320,19 @@ pub(in crate::tui::app) async fn submit_remote_enter_input(
                 remote.set_subagent_model(None).await?;
                 app.session.subagent_model = None;
                 app.push_display_message(DisplayMessage::system(format!(
-                    "Subagent model reset to inherit the current model ({}).",
+                    "子代理将跟随当前模型（{}）。",
                     current_model
                 )));
-                app.set_status_notice("Subagent model: inherit");
+                app.set_status_notice("子代理模型：跟随主代理");
                 return Ok(());
             }
             remote.set_subagent_model(Some(rest.to_string())).await?;
             app.session.subagent_model = Some(rest.to_string());
             app.push_display_message(DisplayMessage::system(format!(
-                "Subagent model pinned to {} for this session.",
+                "此会话的子代理模型已固定为 {}。",
                 rest
             )));
-            app.set_status_notice(format!("Subagent model → {}", rest));
+            app.set_status_notice(format!("子代理模型 → {}", rest));
             return Ok(());
         }
 

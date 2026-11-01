@@ -16,6 +16,8 @@ name = "jcode_base"
 path = "src/lib.rs"
 
 [dependencies]
+jcode-lsp = { path = "../jcode-lsp" }
+jcode-mcp-bridge = { path = "../jcode-mcp-bridge" }
 # Memory allocator (reduces fragmentation for long-running server)
 tikv-jemalloc-ctl = { version = "0.6", optional = true }
 tikv-jemalloc-sys = { version = "0.6", optional = true }

@@ -18,10 +18,15 @@ fn main() {
 
     let pkg_version = root_package_version(&repo_root).unwrap_or_else(|| "0.0.0".to_string());
     let base_version = parse_semver(&pkg_version).unwrap_or((0, 0, 0));
-    let build_semver = resolve_build_semver(base_version).unwrap_or_else(|err| {
-        eprintln!("cargo:warning=failed to resolve auto build semver: {err}");
+    let custom_prerelease = pkg_version.contains('-') && explicit_build_semver_override().is_none();
+    let build_semver = if custom_prerelease {
         pkg_version.clone()
-    });
+    } else {
+        resolve_build_semver(base_version).unwrap_or_else(|err| {
+            eprintln!("cargo:warning=failed to resolve auto build semver: {err}");
+            pkg_version.clone()
+        })
+    };
     let (major, minor, patch) = parse_semver(&build_semver).unwrap_or(base_version);
     let base_semver = format!("{}.{}.{}", base_version.0, base_version.1, base_version.2);
     let update_semver = if explicit_build_semver_override().is_some() {
@@ -115,8 +120,8 @@ fn main() {
     //   Dev:     v0.2.17-dev (abc1234)
     //   Dirty:   v0.2.17-dev (abc1234, dirty)
     let is_release = std::env::var("JCODE_RELEASE_BUILD").is_ok();
-    let version = if is_release {
-        format!("v{}.{}.{} ({})", major, minor, patch, git_hash)
+    let version = if is_release || custom_prerelease {
+        format!("v{} ({})", build_semver, git_hash)
     } else if dirty {
         format!("v{}.{}.{}-dev ({}, dirty)", major, minor, patch, git_hash)
     } else {
@@ -215,7 +220,8 @@ fn root_package_version(repo_root: &Path) -> Option<String> {
 
 fn parse_semver(value: &str) -> Option<(u32, u32, u32)> {
     let trimmed = value.trim().trim_start_matches('v');
-    let mut parts = trimmed.split('.');
+    let core = trimmed.split(['-', '+']).next()?;
+    let mut parts = core.split('.');
     let major = parts.next()?.parse().ok()?;
     let minor = parts.next()?.parse().ok()?;
     let patch = parts.next()?.parse().ok()?;

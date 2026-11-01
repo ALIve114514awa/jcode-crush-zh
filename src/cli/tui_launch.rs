@@ -744,7 +744,7 @@ pub fn list_sessions() -> Result<()> {
         Some(tui::session_picker::PickerResult::RestoreCrashedGroup(session_ids)) => {
             let recovered = session::recover_crashed_sessions_by_ids(&session_ids)?;
             if recovered.is_empty() {
-                eprintln!("No crashed sessions found in the selected restore group.");
+                eprintln!("所选恢复分组中没有崩溃会话。");
                 return Ok(());
             }
 
@@ -781,7 +781,7 @@ pub fn list_sessions() -> Result<()> {
                         eprintln!("  jcode --resume {}", session_id);
                     }
                     Err(e) => {
-                        eprintln!("Failed to spawn session {}: {}", session_id, e);
+                        eprintln!("启动会话 {} 失败：{}", session_id, e);
                     }
                 }
             }

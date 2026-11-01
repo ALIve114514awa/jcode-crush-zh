@@ -1,0 +1,12 @@
+{
+  "name": "jcode-fusion-runtime",
+  "version": "0.94.0-crush.1",
+  "private": true,
+  "description": "Pinned runtime dependencies for the JCode LSP and remote MCP integration",
+  "dependencies": {
+    "@iarna/toml": "2.2.5",
+    "mcp-remote": "0.15.1",
+    "typescript": "6.0.3",
+    "typescript-language-server": "6.0.2"
+  }
+}

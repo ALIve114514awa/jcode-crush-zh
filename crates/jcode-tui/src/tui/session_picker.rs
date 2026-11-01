@@ -1659,12 +1659,12 @@ impl SessionPicker {
                     let ago = format_time_ago(session.last_message_time);
                     let label = match &session.status {
                         SessionStatus::Active => "active".to_string(),
-                        SessionStatus::Closed => format!("closed {}", ago),
-                        SessionStatus::Crashed { .. } => format!("crashed {}", ago),
-                        SessionStatus::Reloaded => format!("reloaded {}", ago),
-                        SessionStatus::Compacted => format!("compacted {}", ago),
-                        SessionStatus::RateLimited => format!("rate-limited {}", ago),
-                        SessionStatus::Error { .. } => format!("errored {}", ago),
+                        SessionStatus::Closed => format!("已关闭 {}", ago),
+                        SessionStatus::Crashed { .. } => format!("已崩溃 {}", ago),
+                        SessionStatus::Reloaded => format!("已重新加载 {}", ago),
+                        SessionStatus::Compacted => format!("已压缩 {}", ago),
+                        SessionStatus::RateLimited => format!("已限流 {}", ago),
+                        SessionStatus::Error { .. } => format!("发生错误 {}", ago),
                     };
                     Span::styled(format!("  {}", label), Style::default().fg(dim_color))
                 },

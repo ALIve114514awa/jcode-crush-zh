@@ -1,0 +1,21 @@
+# Merge these tables into JCODE_HOME/config.toml and create a new session.
+# Paths below match this checkout's local, pinned TypeScript installation.
+[lsp]
+enabled = true
+
+[lsp.servers.typescript]
+command = "node"
+args = ["C:/Workspace/New agent/.tools/lsp-node/node_modules/typescript-language-server/lib/cli.mjs", "--stdio"]
+file_types = ["ts", "tsx", "js", "jsx", "mjs", "cjs"]
+root_markers = ["tsconfig.json", "jsconfig.json", "package.json", ".git"]
+timeout_secs = 30
+idle_timeout_secs = 120
+
+[lsp.servers.typescript.initialization_options]
+disableAutomaticTypingAcquisition = true
+# V8 old-space limit for tsserver, not a total process-tree memory limit.
+maxTsServerMemory = 256
+
+[lsp.servers.typescript.initialization_options.tsserver]
+path = "C:/Workspace/New agent/.tools/lsp-node/node_modules/typescript/lib/tsserver.js"
+useSyntaxServer = "never"

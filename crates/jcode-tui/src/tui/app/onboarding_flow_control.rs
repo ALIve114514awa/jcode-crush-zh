@@ -760,7 +760,7 @@ impl App {
                 yes_highlighted: true
             })
         );
-        let choice = if yes { "Yes" } else { "No" };
+        let choice = if yes { "是" } else { "否" };
         self.set_status_notice(format!(
             "Log in to OpenAI? [{choice}] - hl to move, Enter to choose (No skips for now)"
         ));
@@ -1609,7 +1609,7 @@ impl App {
         self.onboarding_import_error = Some(
             reason
                 .map(|r| Self::summarize_import_error(&r))
-                .unwrap_or_else(|| "We couldn't import those logins.".to_string()),
+                .unwrap_or_else(|| "无法导入这些登录信息。".to_string()),
         );
         self.set_status_notice(
             "Import failed. Press Enter to choose a provider and log in manually.",
@@ -1626,11 +1626,11 @@ impl App {
             .find(|l| {
                 !l.is_empty() && !l.starts_with("**") && !l.eq_ignore_ascii_case("Logins imported")
             })
-            .unwrap_or("We couldn't import those logins.")
+            .unwrap_or("无法导入这些登录信息。")
             .trim_start_matches(['✕', '✓', '-', ' '])
             .trim();
         let cleaned = if cleaned.is_empty() {
-            "We couldn't import those logins."
+            "无法导入这些登录信息。"
         } else {
             cleaned
         };

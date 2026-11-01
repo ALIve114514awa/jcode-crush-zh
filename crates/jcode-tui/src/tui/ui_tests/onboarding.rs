@@ -17,10 +17,7 @@ fn render_onboarding(state: &TestState, width: u16, height: u16) -> String {
     let buf = terminal.backend().buffer();
     let mut lines = Vec::with_capacity(height as usize);
     for y in 0..height {
-        let mut line = String::with_capacity(width as usize);
-        for x in 0..width {
-            line.push_str(buf[(x, y)].symbol());
-        }
+        let line = crate::tui::test_harness::buffer_line_text(buf, y);
         lines.push(line.trim_end().to_string());
     }
     lines.join("\n")
@@ -54,7 +51,7 @@ fn onboarding_welcome_shows_title_and_suggestions_without_telemetry_blurb() {
         "first page should not carry the telemetry opt-out hint:\n{text}"
     );
     assert!(
-        text.contains("Welcome to jcode onboarding"),
+        text.contains("欢迎使用 JCode"),
         "welcome title should be rendered:\n{text}"
     );
     assert!(
@@ -66,7 +63,7 @@ fn onboarding_welcome_shows_title_and_suggestions_without_telemetry_blurb() {
         "secondary suggestion should be rendered:\n{text}"
     );
     assert!(
-        text.contains("Press 1-2 or type anything to start"),
+        text.contains("按 1-2 选择，或直接输入内容开始"),
         "numeric hint should reflect suggestion count:\n{text}"
     );
 }
@@ -76,7 +73,7 @@ fn onboarding_welcome_login_suggestion_shows_typed_command() {
     let state = onboarding_state();
     let text = render_onboarding(&state, 80, 30);
     assert!(
-        text.contains("(type /login)"),
+        text.contains("（输入 /login）"),
         "login suggestion should hint the slash command:\n{text}"
     );
 }
@@ -88,7 +85,7 @@ fn onboarding_welcome_renders_on_tiny_area_without_panicking() {
     let state = onboarding_state();
     let text = render_onboarding(&state, 20, 5);
     assert!(
-        text.contains("Welcome to jcode"),
+        text.contains("欢迎使用 JCode"),
         "minimal fallback should still show the title:\n{text}"
     );
 }

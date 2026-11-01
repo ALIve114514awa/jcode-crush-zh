@@ -599,7 +599,7 @@ fn prepare_active_batch_progress(
         Span::styled(format!("  {} ", spinner), Style::default().fg(accent)),
         Span::styled("batch", Style::default().fg(tool_color())),
         Span::styled(
-            format!(" · {}/{} done", progress.completed, progress.total),
+            format!(" · 已完成 {}/{}", progress.completed, progress.total),
             Style::default().fg(dim_color()),
         ),
     ];
@@ -609,7 +609,7 @@ fn prepare_active_batch_progress(
         .filter(|_| progress.completed < progress.total)
     {
         header.push(Span::styled(
-            format!(" · last done: {}", last),
+            format!(" · 上次完成：{}", last),
             Style::default().fg(dim_color()),
         ));
     }
@@ -870,7 +870,7 @@ fn prepare_messages_inner(app: &dyn TuiState, width: u16, height: u16) -> Prepar
                                 .add_modifier(Modifier::BOLD),
                         ),
                         Span::styled(
-                            format!("(type {})", prompt),
+                            format!("（输入 {}）", prompt),
                             Style::default().fg(dim_color()),
                         ),
                     ]

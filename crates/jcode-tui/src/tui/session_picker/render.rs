@@ -14,9 +14,9 @@ impl SessionPicker {
 
     pub(super) fn crash_reason_line(session: &SessionInfo) -> Option<Line<'static>> {
         let reason = match &session.status {
-            SessionStatus::Crashed { message } => message
-                .as_deref()
-                .unwrap_or("Unexpected termination (no additional details)"),
+            SessionStatus::Crashed { message } => {
+                message.as_deref().unwrap_or("意外终止（无更多详情）")
+            }
             _ => return None,
         };
 
@@ -29,7 +29,7 @@ impl SessionPicker {
         Some(Line::from(vec![
             Span::styled("     ", Style::default()),
             Span::styled(
-                format!("reason: {}", reason_display),
+                format!("原因：{}", reason_display),
                 Style::default().fg(rgb(220, 120, 120)),
             ),
         ]))
@@ -226,7 +226,7 @@ impl SessionPicker {
                 Some(("●", rgb(120, 210, 255), "live Claude".to_string()))
             } else if self.session_is_streaming(session) {
                 let label = match self.session_streaming_duration(session) {
-                    Some(elapsed) => format!("working {}", format_short_duration(elapsed)),
+                    Some(elapsed) => format!("处理中 {}", format_short_duration(elapsed)),
                     None => "working".to_string(),
                 };
                 Some((
@@ -245,17 +245,17 @@ impl SessionPicker {
             Some(badge) => badge,
             None => match &session.status {
                 SessionStatus::Active => ("▶", rgb(100, 200, 100), "active".to_string()),
-                SessionStatus::Closed => ("✓", dim, format!("closed {}", time_ago)),
+                SessionStatus::Closed => ("✓", dim, format!("已关闭 {}", time_ago)),
                 SessionStatus::Crashed { .. } => {
-                    ("💥", rgb(220, 100, 100), format!("crashed {}", time_ago))
+                    ("💥", rgb(220, 100, 100), format!("已崩溃 {}", time_ago))
                 }
-                SessionStatus::Reloaded => ("🔄", user_clr, format!("reloaded {}", time_ago)),
+                SessionStatus::Reloaded => ("🔄", user_clr, format!("已重新加载 {}", time_ago)),
                 SessionStatus::Compacted => {
-                    ("📦", rgb(255, 193, 7), format!("compacted {}", time_ago))
+                    ("📦", rgb(255, 193, 7), format!("已压缩 {}", time_ago))
                 }
-                SessionStatus::RateLimited => ("⏳", accent, format!("rate-limited {}", time_ago)),
+                SessionStatus::RateLimited => ("⏳", accent, format!("已限流 {}", time_ago)),
                 SessionStatus::Error { .. } => {
-                    ("❌", rgb(220, 100, 100), format!("errored {}", time_ago))
+                    ("❌", rgb(220, 100, 100), format!("发生错误 {}", time_ago))
                 }
             },
         };
@@ -299,7 +299,7 @@ impl SessionPicker {
         }
         if in_batch_restore {
             line1_spans.push(Span::styled(
-                "  [BATCH]",
+                "  [批量]",
                 Style::default()
                     .fg(batch_restore)
                     .add_modifier(Modifier::BOLD),
@@ -307,7 +307,7 @@ impl SessionPicker {
         }
         if is_current {
             line1_spans.push(Span::styled(
-                "  ◀ current",
+                "  ◀ 当前",
                 Style::default()
                     .fg(rgb(110, 210, 255))
                     .add_modifier(Modifier::BOLD),
@@ -315,7 +315,7 @@ impl SessionPicker {
         }
         if same_dir {
             line1_spans.push(Span::styled(
-                "  ▸ here",
+                "  ▸ 此处",
                 Style::default()
                     .fg(same_dir_clr)
                     .add_modifier(Modifier::BOLD),
@@ -334,7 +334,7 @@ impl SessionPicker {
                     format!("{}", session.message_count),
                     Style::default().fg(user_clr),
                 ),
-                Span::styled(" messages", Style::default().fg(dimmer)),
+                Span::styled(" 条消息", Style::default().fg(dimmer)),
                 Span::styled(" · ", Style::default().fg(dimmer)),
                 Span::styled(tokens_display, Style::default().fg(dimmer)),
             ])
@@ -345,13 +345,13 @@ impl SessionPicker {
                     format!("{}", session.user_message_count),
                     Style::default().fg(user_clr),
                 ),
-                Span::styled(" user", Style::default().fg(dimmer)),
+                Span::styled(" 用户", Style::default().fg(dimmer)),
                 Span::styled(" · ", Style::default().fg(dimmer)),
                 Span::styled(
                     format!("{}", session.assistant_message_count),
                     Style::default().fg(rgb(129, 199, 132)),
                 ),
-                Span::styled(" assistant", Style::default().fg(dimmer)),
+                Span::styled(" 助手", Style::default().fg(dimmer)),
                 Span::styled(" · ", Style::default().fg(dimmer)),
                 Span::styled(tokens_display, Style::default().fg(dimmer)),
             ])
@@ -366,7 +366,7 @@ impl SessionPicker {
         let mut line3_spans = vec![
             Span::styled("     ", Style::default()),
             Span::styled(
-                format!("active {}", active_ago),
+                format!("活动中 {}", active_ago),
                 Style::default().fg(dimmer),
             ),
         ];
@@ -391,7 +391,7 @@ impl SessionPicker {
             };
             let mut prompt_spans = vec![
                 Span::styled("     ", Style::default()),
-                Span::styled("prompt: ", Style::default().fg(dimmer)),
+                Span::styled("输入：", Style::default().fg(dimmer)),
             ];
             prompt_spans.extend(Self::highlight_spans(
                 &prompt_display,
@@ -444,7 +444,7 @@ impl SessionPicker {
                     ),
                 ])),
                 ListItem::new(Line::from(vec![Span::styled(
-                    "     Scanning local, imported, and running sessions…",
+                    "     正在扫描本地、导入和运行中的会话…",
                     Style::default().fg(dim),
                 )])),
             ]
@@ -453,13 +453,13 @@ impl SessionPicker {
         {
             vec![
                 ListItem::new(Line::from(vec![Span::styled(
-                    "  No other active sessions",
+                    "  没有其他活动会话",
                     Style::default()
                         .fg(rgb(220, 220, 220))
                         .add_modifier(Modifier::BOLD),
                 )])),
                 ListItem::new(Line::from(vec![Span::styled(
-                    "     s cycles to all sessions · Esc closes",
+                    "     s 切换全部会话 · Esc 关闭",
                     Style::default().fg(dim),
                 )])),
             ]
@@ -489,7 +489,7 @@ impl SessionPicker {
                                         .add_modifier(Modifier::BOLD),
                                 ),
                                 Span::styled(
-                                    format!("  {} · {} sessions", version, session_count),
+                                    format!("  {} · {} 个会话", version, session_count),
                                     Style::default().fg(dim),
                                 ),
                             ]);
@@ -499,11 +499,11 @@ impl SessionPicker {
                             let line1 = Line::from(vec![
                                 Span::styled("📦 ", Style::default().fg(dim)),
                                 Span::styled(
-                                    "Other sessions",
+                                    "其他会话",
                                     Style::default().fg(dim).add_modifier(Modifier::BOLD),
                                 ),
                                 Span::styled(
-                                    format!("  {} sessions", session_count),
+                                    format!("  {} 个会话", session_count),
                                     Style::default().fg(dim),
                                 ),
                             ]);
@@ -514,7 +514,7 @@ impl SessionPicker {
                             let line1 = Line::from(vec![
                                 Span::styled("📌 ", Style::default().fg(saved_color)),
                                 Span::styled(
-                                    "Saved",
+                                    "已收藏",
                                     Style::default()
                                         .fg(saved_color)
                                         .add_modifier(Modifier::BOLD),
@@ -546,7 +546,7 @@ impl SessionPicker {
         let mut title_parts: Vec<Span> = Vec::new();
         if self.loading_message.is_some() {
             title_parts.push(Span::styled(
-                " loading sessions ",
+                " 正在加载会话 ",
                 Style::default()
                     .fg(rgb(255, 200, 100))
                     .add_modifier(Modifier::BOLD),
@@ -565,18 +565,18 @@ impl SessionPicker {
                         }
                     });
             title_parts.push(Span::styled(
-                format!(" {} active ", working + ready),
+                format!(" {} 个活动会话 ", working + ready),
                 Style::default()
                     .fg(rgb(200, 200, 200))
                     .add_modifier(Modifier::BOLD),
             ));
             title_parts.push(Span::styled(
-                format!("{}{} working", spinner, working),
+                format!("{}{} 个处理中", spinner, working),
                 Style::default().fg(rgb(255, 193, 7)),
             ));
             title_parts.push(Span::styled(" · ", Style::default().fg(rgb(80, 80, 80))));
             title_parts.push(Span::styled(
-                format!("●{} ready", ready),
+                format!("●{} 个就绪", ready),
                 Style::default().fg(rgb(100, 220, 130)),
             ));
         } else {
@@ -598,13 +598,13 @@ impl SessionPicker {
             Style::default().fg(rgb(255, 180, 100)),
         ));
         title_parts.push(Span::styled(
-            " (s/S filter)",
+            "（s/S 筛选）",
             Style::default().fg(rgb(80, 80, 80)),
         ));
 
         if self.hidden_test_count > 0 {
             title_parts.push(Span::styled(
-                format!(" (+{} hidden)", self.hidden_test_count),
+                format!("（另有 {} 项隐藏）", self.hidden_test_count),
                 Style::default().fg(rgb(80, 80, 80)),
             ));
         }
@@ -618,7 +618,7 @@ impl SessionPicker {
 
         if self.selection_count() > 0 {
             title_parts.push(Span::styled(
-                format!("  ✓ {} selected", self.selection_count()),
+                format!("  ✓ 已选择 {} 项", self.selection_count()),
                 Style::default().fg(rgb(140, 220, 160)),
             ));
         }
@@ -626,21 +626,21 @@ impl SessionPicker {
         title_parts.push(Span::styled(" ", Style::default()));
 
         let mut help = if self.loading_message.is_some() {
-            " Esc cancel ".to_string()
+            " Esc 取消 ".to_string()
         } else if self.search_active {
-            " type to filter · Ctrl+J/K or ↑↓ nav · Ctrl+W word-del · Esc cancel ".to_string()
+            " 输入筛选 · Ctrl+J/K 或 ↑↓ 移动 · Ctrl+W 删词 · Esc 取消 ".to_string()
         } else {
             match crate::config::config().keybindings.session_picker_enter {
                 crate::config::SessionPickerResumeAction::CurrentTerminal => {
-                    " Space select · Enter in place · Ctrl+Enter new terminal · d debug · / search · h/l focus · ↑↓ · q ".to_string()
+                    " Space 选择 · Enter 当前窗口 · Ctrl+Enter 新终端 · d 调试 · / 搜索 · h/l 焦点 · ↑↓ · q ".to_string()
                 }
                 crate::config::SessionPickerResumeAction::NewTerminal => {
-                    " Space select · Enter new terminal · Ctrl+Enter in place · d debug · / search · h/l focus · ↑↓ · q ".to_string()
+                    " Space 选择 · Enter 新终端 · Ctrl+Enter 当前窗口 · d 调试 · / 搜索 · h/l 焦点 · ↑↓ · q ".to_string()
                 }
             }
         };
         if self.selected_live_claude_target().is_some() && !self.search_active {
-            help = format!(" T take over live Claude ·{}", help);
+            help = format!(" T 接管运行中的 Claude ·{}", help);
         }
 
         let border_dim: Color = rgb(70, 70, 70);
@@ -715,12 +715,12 @@ impl SessionPicker {
         };
 
         let omitted = if info.omitted_crashed_count > 0 {
-            format!(" · {} older skipped", info.omitted_crashed_count)
+            format!(" · 已跳过 {} 个旧会话", info.omitted_crashed_count)
         } else {
             String::new()
         };
         let title = format!(
-            " R restore shown group · {} relevant crashed session(s) detected{} ",
+            " R 恢复所示分组 · 检测到 {} 个相关崩溃会话{} ",
             info.session_ids.len(),
             omitted
         );
@@ -731,7 +731,7 @@ impl SessionPicker {
                 Span::styled(names, Style::default().fg(Color::White)),
             ]),
             Line::from(vec![Span::styled(
-                "Press R (or B) to restore only this guessed recent group.",
+                "按 R（或 B）恢复当前推测的最近分组。",
                 Style::default().fg(rgb(180, 180, 180)),
             )]),
         ];

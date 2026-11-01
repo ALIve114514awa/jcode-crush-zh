@@ -2435,7 +2435,7 @@ pub(in crate::tui::app) fn handle_server_event(
                 app.push_display_message(DisplayMessage::error(
                     crate::tui::app::model_context::model_switch_failure_message(&err, true),
                 ));
-                app.set_status_notice("Model switch failed");
+                app.set_status_notice("模型切换失败");
             } else {
                 // The server also re-sends ModelChanged on resume so the client
                 // learns the server-resolved context window. That is not a
@@ -2467,7 +2467,7 @@ pub(in crate::tui::app) fn handle_server_event(
                     )));
                 }
                 if model_actually_changed {
-                    app.set_status_notice(format!("Model → {}", model));
+                    app.set_status_notice(format!("模型 → {}", model));
                 }
             }
             false

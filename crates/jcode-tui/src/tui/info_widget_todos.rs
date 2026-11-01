@@ -646,7 +646,7 @@ pub(super) fn render_todos_expanded(data: &InfoWidgetData, inner: Rect) -> Vec<L
         lines.extend(group_lines);
         if total > shown {
             lines.push(Line::from(vec![Span::styled(
-                format!("  +{} more", total - shown),
+                format!("  另有 {} 项", total - shown),
                 Style::default().fg(rgb(100, 100, 110)),
             )]));
         }
@@ -683,7 +683,7 @@ pub(super) fn render_todos_expanded(data: &InfoWidgetData, inner: Rect) -> Vec<L
         } else if remaining_completed > 0 {
             format!("  +{} more ({} done)", remaining, remaining_completed)
         } else {
-            format!("  +{} more", remaining)
+            format!("  另有 {} 项", remaining)
         };
         lines.push(Line::from(vec![Span::styled(
             desc,

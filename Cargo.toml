@@ -1,6 +1,6 @@
 [package]
 name = "jcode"
-version = "0.94.0"
+version = "0.94.0-crush.2.zhCN"
 description = "Possibly the greatest coding agent ever built — blazing-fast TUI, multi-model, swarm coordination, 30+ tools"
 edition = "2024"
 autobins = false
@@ -11,6 +11,8 @@ members = [
     "crates/jcode-agent-runtime",
     "crates/jcode-app-core",
     "crates/jcode-base",
+    "crates/jcode-lsp",
+    "crates/jcode-mcp-bridge",
     "crates/jcode-tui",
     "crates/jcode-build-meta",
     "crates/jcode-ambient-types",

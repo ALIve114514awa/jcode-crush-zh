@@ -519,6 +519,9 @@ impl Registry {
 
         // Per-session tools that need provider/registry references
         let session_tools_start = std::time::Instant::now();
+        for tool in crate::lsp::configured_tools(crate::config::config().lsp.clone()) {
+            tools_map.insert(tool.name().to_string(), tool);
+        }
         Self::insert_tool(
             &mut tools_map,
             "batch",

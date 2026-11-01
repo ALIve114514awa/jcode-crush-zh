@@ -25,7 +25,7 @@ pub(super) fn draw_changelog_overlay(
 
     if groups.is_empty() {
         lines.push(Line::from(Span::styled(
-            "No changelog entries available.",
+            "暂无更新记录。",
             Style::default().fg(dim_color()),
         )));
     } else {
@@ -67,7 +67,7 @@ pub(super) fn draw_changelog_overlay(
         String::new()
     };
 
-    let title = format!(" Changelog {} ", scroll_info);
+    let title = format!(" 更新记录 {} ", scroll_info);
     let block = Block::default()
         .title(Span::styled(
             title,
@@ -76,7 +76,7 @@ pub(super) fn draw_changelog_overlay(
                 .add_modifier(Modifier::BOLD),
         ))
         .title_bottom(Line::from(Span::styled(
-            " Esc to close · drag to select, release to copy · wheel/j/k scroll ",
+            " Esc 关闭 · 拖选后松开复制 · 滚轮/j/k 滚动 ",
             Style::default().fg(dim_color()),
         )))
         .borders(Borders::ALL)
@@ -144,9 +144,9 @@ pub(super) fn draw_commit_log_overlay(
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .title(format!(" Commit log: {} ", overlay.title))
+        .title(format!(" 提交记录：{} ", overlay.title))
         .title_bottom(Line::from(Span::styled(
-            " j/k move, d/u page, g/G top/bottom, c copy hash, q/Esc close ",
+            " j/k 移动 · d/u 翻页 · g/G 顶部/底部 · c 复制哈希 · q/Esc 关闭 ",
             Style::default().fg(dim_color()),
         )));
     let inner = block.inner(area);
@@ -168,7 +168,7 @@ pub(super) fn draw_commit_log_overlay(
     if overlay.entries.is_empty() {
         frame.render_widget(
             Paragraph::new(Line::from(Span::styled(
-                " No commits yet.",
+                " 暂无提交。",
                 Style::default().fg(dim_color()),
             ))),
             inner,
@@ -260,247 +260,154 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
 
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Commands", section_style)));
+    lines.push(Line::from(Span::styled("  常用命令", section_style)));
     lines.push(Line::from(""));
-    lines.push(help_entry("/help", "Show this help overlay"));
-    lines.push(help_entry(
-        "/help <command>",
-        "Show details for one command",
-    ));
-    lines.push(help_entry("/model", "List or switch models"));
-    lines.push(help_entry("/model <name>", "Switch to a different model"));
+    lines.push(help_entry("/help", "显示帮助"));
+    lines.push(help_entry("/help <command>", "查看指定命令的详细帮助"));
+    lines.push(help_entry("/model", "选择或切换模型"));
+    lines.push(help_entry("/model <name>", "切换到指定模型"));
     lines.push(help_entry(
         "/provider-test-coverage",
-        "Show live-test evidence for the current provider/model",
+        "查看当前服务商和模型的实测记录",
     ));
-    lines.push(help_entry("/agents", "Configure models for agent roles"));
-    lines.push(help_entry(
-        "/swarm-prompt",
-        "Open the active swarm routing prompt in your editor",
-    ));
+    lines.push(help_entry("/agents", "配置各代理角色使用的模型"));
+    lines.push(help_entry("/swarm-prompt", "在编辑器中打开代理协作提示词"));
     lines.push(help_entry(
         "/effort <level>",
-        "Set effort (none|minimal|low|medium|high|xhigh|max|swarm|swarm-deep)",
+        "设置推理强度（none|minimal|low|medium|high|xhigh|max|swarm|swarm-deep）",
     ));
     lines.push(help_entry(
         "/fast [on|off|status|default ...]",
-        "Toggle fast mode",
+        "切换快速模式",
     ));
     lines.push(help_entry(
         "/transport <mode>",
-        "Set connection transport (auto|https|websocket)",
+        "设置连接方式（auto|https|websocket）",
     ));
     lines.push(help_entry(
         "/alignment [status|centered|left]",
-        "Show or persist text alignment preference",
+        "查看或保存文字对齐方式",
     ));
     lines.push(help_entry(
         "/compact-notifications [status|on|off]",
-        "Collapse swarm/file-activity notifications to one line",
+        "将协作和文件活动通知折叠为一行",
     ));
     lines.push(help_entry(
         "/show-agentgrep-output [status|on|off]",
-        "Render full agentgrep search output inline in chat",
+        "在对话中显示完整搜索结果",
     ));
-    lines.push(help_entry("/config", "Show active configuration"));
-    lines.push(help_entry("/config init", "Create default config file"));
-    lines.push(help_entry("/config edit", "Open config in $EDITOR"));
-    lines.push(help_entry(
-        "/voice",
-        "Voice input: speak, then send (Ctrl+Space)",
-    ));
-    lines.push(help_entry("/dictate", "Run configured external dictation"));
-    lines.push(help_entry(
-        "/git [status]",
-        "Show branch and working tree status for the repo",
-    ));
-    lines.push(help_entry(
-        "/context",
-        "Show the full session context snapshot",
-    ));
-    lines.push(help_entry(
-        "/skills",
-        "Show loaded skills and jcode-endorsed recommendations",
-    ));
-    lines.push(help_entry("/info", "Show session info and token usage"));
-    lines.push(help_entry(
-        "/keys",
-        "Show keybinding conflicts with your terminal/OS",
-    ));
+    lines.push(help_entry("/config", "查看当前配置"));
+    lines.push(help_entry("/config init", "创建默认配置文件"));
+    lines.push(help_entry("/config edit", "使用 $EDITOR 打开配置"));
+    lines.push(help_entry("/voice", "语音输入：说话后发送（Ctrl+Space）"));
+    lines.push(help_entry("/dictate", "运行已配置的外部听写工具"));
+    lines.push(help_entry("/git [status]", "查看分支及工作区状态"));
+    lines.push(help_entry("/context", "查看完整会话上下文"));
+    lines.push(help_entry("/skills", "查看已加载技能和推荐技能"));
+    lines.push(help_entry("/info", "查看会话信息及 Token 用量"));
+    lines.push(help_entry("/keys", "查看与终端或系统冲突的快捷键"));
     lines.push(help_entry(
         "/reset usage limits openai",
-        "Review a banked reset, then confirm or cancel",
+        "查看可用重置次数并确认或取消",
     ));
-    lines.push(help_entry("/usage", "Show connected provider usage limits"));
-    lines.push(help_entry(
-        "/support",
-        "Email support with diagnostics prefilled",
-    ));
-    lines.push(help_entry("/version", "Show version and build details"));
-    lines.push(help_entry(
-        "/changelog",
-        "Show recent changes in this build",
-    ));
+    lines.push(help_entry("/usage", "查看已连接服务商的用量限制"));
+    lines.push(help_entry("/support", "生成附带诊断信息的支持邮件"));
+    lines.push(help_entry("/version", "查看版本及构建信息"));
+    lines.push(help_entry("/changelog", "查看此版本的更新记录"));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Session", section_style)));
+    lines.push(Line::from(Span::styled("  会话", section_style)));
     lines.push(Line::from(""));
-    lines.push(help_entry("/clear", "Clear conversation and start fresh"));
-    lines.push(help_entry(
-        "/compact",
-        "Summarize old messages to free context",
-    ));
-    lines.push(help_entry(
-        "/rewind",
-        "Show numbered history, /rewind N to rewind",
-    ));
-    lines.push(help_entry(
-        "/fix",
-        "Attempt recovery when model cannot continue",
-    ));
+    lines.push(help_entry("/clear", "清空对话并开始新会话"));
+    lines.push(help_entry("/compact", "总结旧消息以释放上下文"));
+    lines.push(help_entry("/rewind", "查看历史编号，使用 /rewind N 回退"));
+    lines.push(help_entry("/fix", "尝试恢复无法继续的会话"));
     lines.push(help_entry(
         "/poke",
-        "Poke model to resume with incomplete todos (on/off/status)",
+        "提醒模型继续未完成待办（on/off/status）",
     ));
-    lines.push(help_entry(
-        "/plan [goal]",
-        "Draft a plan-only proposal as a plan card (no edits)",
-    ));
-    lines.push(help_entry(
-        "/improve",
-        "Autonomously improve the repo until returns diminish",
-    ));
-    lines.push(help_entry(
-        "/improve resume",
-        "Resume the last saved improve loop/plan",
-    ));
-    lines.push(help_entry(
-        "/refactor",
-        "Run a safe refactor loop with independent review",
-    ));
-    lines.push(help_entry(
-        "/refactor resume",
-        "Resume the last saved refactor loop/plan",
-    ));
+    lines.push(help_entry("/plan [goal]", "生成计划卡片，暂不修改文件"));
+    lines.push(help_entry("/improve", "持续自主改进仓库"));
+    lines.push(help_entry("/improve resume", "继续上次保存的改进计划"));
+    lines.push(help_entry("/refactor", "执行带独立审查的重构"));
+    lines.push(help_entry("/refactor resume", "继续上次保存的重构计划"));
     lines.push(help_entry(
         "/splitview [on|off|status]",
-        "Mirror the current chat in the side panel",
+        "在侧栏同步显示当前对话",
     ));
     lines.push(help_entry(
         "/fork [prompt]",
-        "Fork session into a new window (alias: /split)",
+        "在新窗口分支会话（别名：/split）",
     ));
-    lines.push(help_entry(
-        "/transfer",
-        "Open a fresh session with only compacted context + copied todos",
-    ));
+    lines.push(help_entry("/transfer", "以压缩上下文和待办列表开始新会话"));
     lines.push(help_entry(
         "/workspace [status|on|off|add]",
-        "Enable and manage the Niri-style session workspace",
+        "启用并管理会话工作区",
     ));
     lines.push(help_entry(
         "/catchup [next|list]",
-        "Jump to finished sessions and open a Catch Up brief",
+        "切换到已完成会话并显示摘要",
     ));
-    lines.push(help_entry(
-        "/back",
-        "Return to the previous Catch Up source session",
-    ));
-    lines.push(help_entry("/resume", "Browse and resume previous sessions"));
-    lines.push(help_entry(
-        "/active",
-        "Manage live sessions: see which are working vs ready",
-    ));
+    lines.push(help_entry("/back", "返回查看摘要前的会话"));
+    lines.push(help_entry("/resume", "浏览并恢复历史会话"));
+    lines.push(help_entry("/active", "管理运行中的会话并查看状态"));
     lines.push(help_entry(
         "/catchup [next]",
-        "Jump into finished sessions with a side-panel brief",
+        "切换到已完成会话并在侧栏显示摘要",
     ));
-    lines.push(help_entry(
-        "/back",
-        "Return to the previous Catch Up session",
-    ));
-    lines.push(help_entry("/save [label]", "Bookmark session for /resume"));
+    lines.push(help_entry("/back", "返回上一个摘要会话"));
+    lines.push(help_entry("/save [label]", "收藏会话，以便 /resume 恢复"));
     lines.push(help_entry(
         "/rename <name>|--clear",
-        "Set or clear current session name",
+        "设置或清除当前会话名称",
     ));
-    lines.push(help_entry(
-        "/unsave",
-        "Remove bookmark from current session",
-    ));
+    lines.push(help_entry("/unsave", "取消收藏当前会话"));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Memory & Swarm", section_style)));
+    lines.push(Line::from(Span::styled("  记忆与代理协作", section_style)));
     lines.push(Line::from(""));
-    lines.push(help_entry("/memory [on|off]", "Toggle memory features"));
-    lines.push(help_entry(
-        "/test [claim]",
-        "Run layered verification and produce proof",
-    ));
-    lines.push(help_entry(
-        "/initiatives",
-        "Open initiatives overview / resume an initiative",
-    ));
-    lines.push(help_entry("/swarm [on|off]", "Toggle swarm features"));
+    lines.push(help_entry("/memory [on|off]", "开启或关闭记忆功能"));
+    lines.push(help_entry("/test [claim]", "执行分层验证并生成证据"));
+    lines.push(help_entry("/initiatives", "查看或恢复长期任务"));
+    lines.push(help_entry("/swarm [on|off]", "开启或关闭代理协作"));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Auth & Accounts", section_style)));
+    lines.push(Line::from(Span::styled("  登录与账户", section_style)));
     lines.push(Line::from(""));
-    lines.push(help_entry("/auth", "Show authentication status"));
+    lines.push(help_entry("/auth", "查看认证状态"));
     lines.push(help_entry(
         "/login [provider]",
-        "Interactive or direct login",
+        "交互登录或直接指定服务商登录",
     ));
-    lines.push(help_entry(
-        "/account",
-        "Open combined Claude/OpenAI account picker",
-    ));
-    lines.push(help_entry(
-        "/subscription",
-        "Inspect jcode subscription scaffold",
-    ));
-    lines.push(help_entry(
-        "/subscribe",
-        "Why and how to subscribe to jcode",
-    ));
+    lines.push(help_entry("/account", "选择 Claude 或 OpenAI 账户"));
+    lines.push(help_entry("/subscription", "查看 JCode 订阅状态"));
+    lines.push(help_entry("/subscribe", "了解 JCode 订阅方式"));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  System", section_style)));
+    lines.push(Line::from(Span::styled("  系统", section_style)));
     lines.push(Line::from(""));
-    lines.push(help_entry("/reload", "Reload to newer binary if available"));
-    lines.push(help_entry(
-        "/restart",
-        "Restart with current binary (no build)",
-    ));
-    lines.push(help_entry(
-        "/rebuild",
-        "Full update (git pull + build + tests)",
-    ));
+    lines.push(help_entry("/reload", "重新加载可用的新版本"));
+    lines.push(help_entry("/restart", "使用当前程序重启"));
+    lines.push(help_entry("/rebuild", "完整更新（拉取源码、构建并测试）"));
     if app.is_remote_mode() {
-        lines.push(help_entry("/client-reload", "Force reload client binary"));
-        lines.push(help_entry("/server-reload", "Force reload server binary"));
-        lines.push(help_entry(
-            "/continue",
-            "Continue every interrupted live session that would auto-resume",
-        ));
+        lines.push(help_entry("/client-reload", "强制重新加载客户端"));
+        lines.push(help_entry("/server-reload", "强制重新加载服务器"));
+        lines.push(help_entry("/continue", "继续所有等待自动恢复的会话"));
     }
-    lines.push(help_entry(
-        "/debug-visual",
-        "Enable visual debugging for TUI issues",
-    ));
-    lines.push(help_entry("/quit", "Exit jcode"));
+    lines.push(help_entry("/debug-visual", "启用终端界面调试"));
+    lines.push(help_entry("/quit", "退出 JCode"));
 
     // The sections above are hand-curated for ordering, but they drift as
     // commands are added. Anything registered and not already shown gets listed
@@ -522,7 +429,7 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
         lines.push(Line::from(""));
         lines.push(separator());
         lines.push(Line::from(""));
-        lines.push(Line::from(Span::styled("  More commands", section_style)));
+        lines.push(Line::from(Span::styled("  更多命令", section_style)));
         lines.push(Line::from(""));
         for (name, desc) in uncovered {
             lines.push(help_entry(name, desc));
@@ -535,10 +442,10 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
         lines.push(separator());
         lines.push(Line::from(""));
 
-        lines.push(Line::from(Span::styled("  Skills", section_style)));
+        lines.push(Line::from(Span::styled("  技能", section_style)));
         lines.push(Line::from(""));
         for skill in &skills {
-            lines.push(help_entry(&format!("/{}", skill), "Activate skill"));
+            lines.push(help_entry(&format!("/{}", skill), "启用技能"));
         }
     }
 
@@ -546,166 +453,130 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Navigation", section_style)));
+    lines.push(Line::from(Span::styled("  导航", section_style)));
     lines.push(Line::from(""));
-    lines.push(key_entry("PageUp / PageDown", "Scroll history"));
-    lines.push(key_entry("Up / Down", "Scroll history (when input empty)"));
+    lines.push(key_entry("PageUp / PageDown", "滚动历史记录"));
+    lines.push(key_entry("Up / Down", "输入框为空时滚动历史"));
     lines.push(key_entry(
         "Ctrl+J / Ctrl+K",
-        "Jump to next / previous user prompt (also Ctrl+] / Ctrl+[)",
+        "跳转到下一条或上一条用户消息（也可用 Ctrl+] / Ctrl+[）",
     ));
     lines.push(key_entry(
         "Ctrl+Shift+J / Ctrl+Shift+K",
-        "Scroll history down / up one line",
+        "向下或向上滚动一行",
     ));
     lines.push(key_entry(
         "Cmd/Super+K / J",
-        "Jump to previous / next user prompt (macOS, if forwarded)",
+        "跳转到上一条或下一条用户消息（macOS）",
     ));
-    lines.push(key_entry("Ctrl+1..4", "Resize side panel to 25/50/75/100%"));
+    lines.push(key_entry("Ctrl+1..4", "将侧栏宽度设为 25/50/75/100%"));
     lines.push(key_entry(
         "Ctrl+5..9",
-        "Jump by recency (5 = 5th most recent)",
+        "按最近顺序跳转（5 表示倒数第 5 项）",
     ));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled(
-        "  Diagrams & Diffs",
-        section_style,
-    )));
+    lines.push(Line::from(Span::styled("  图表与差异", section_style)));
     lines.push(Line::from(""));
     lines.push(key_entry(
         &crate::tui::keybind::side_panel_toggle_key_label(),
-        "Cycle side panel: split, fullscreen, hidden",
+        "切换侧栏：分栏、全屏、隐藏",
     ));
     lines.push(key_entry(
         &crate::tui::keybind::diagram_pane_visibility_key_label(),
-        "Show/hide diagram pane",
+        "显示或隐藏图表面板",
     ));
-    lines.push(key_entry(&alt("T"), "Toggle diagram position (side/top)"));
-    lines.push(key_entry(
-        &alt("Shift+I"),
-        "Show/hide inline images (persists)",
-    ));
-    lines.push(key_entry("Ctrl+H / Ctrl+L", "Focus chat / diagram / diffs"));
+    lines.push(key_entry(&alt("T"), "切换图表位置（侧边/顶部）"));
+    lines.push(key_entry(&alt("Shift+I"), "显示或隐藏内嵌图片（保存设置）"));
+    lines.push(key_entry("Ctrl+H / Ctrl+L", "切换焦点：对话、图表、差异"));
     lines.push(key_entry(
         "Ctrl+L / Cmd+L",
-        "Clear screen, history stays above (no pane focused)",
+        "清屏并保留历史（无面板焦点时）",
     ));
-    lines.push(key_entry(
-        "Ctrl+Left / Right",
-        "Cycle diagrams (when diagram focused)",
-    ));
-    lines.push(key_entry("h/j/k/l / arrows", "Pan diagram (when focused)"));
-    lines.push(key_entry("[ / ]", "Zoom diagram (when focused)"));
-    lines.push(key_entry("+ / -", "Resize diagram pane"));
-    lines.push(key_entry(
-        "/diff",
-        "Cycle diff mode (Off/Inline/Pinned/File)",
-    ));
-    lines.push(key_entry(&alt("G"), "Show the project's git commit log"));
-    lines.push(key_entry("Shift+Tab", "Cycle favorited models"));
-    lines.push(key_entry("Ctrl+O", "Set default model (in /model picker)"));
-    lines.push(key_entry(
-        "Ctrl+N",
-        "Toggle favorite model (in /model picker)",
-    ));
+    lines.push(key_entry("Ctrl+Left / Right", "切换图表（图表获得焦点时）"));
+    lines.push(key_entry("h/j/k/l / arrows", "移动图表（获得焦点时）"));
+    lines.push(key_entry("[ / ]", "缩放图表（获得焦点时）"));
+    lines.push(key_entry("+ / -", "调整图表面板大小"));
+    lines.push(key_entry("/diff", "切换差异模式：关闭、内嵌、固定、文件"));
+    lines.push(key_entry(&alt("G"), "查看项目 Git 提交记录"));
+    lines.push(key_entry("Shift+Tab", "切换收藏的模型"));
+    lines.push(key_entry("Ctrl+O", "设为默认模型（模型选择器中）"));
+    lines.push(key_entry("Ctrl+N", "收藏或取消收藏模型"));
 
     lines.push(Line::from(""));
     lines.push(separator());
     lines.push(Line::from(""));
 
-    lines.push(Line::from(Span::styled("  Input & Editing", section_style)));
+    lines.push(Line::from(Span::styled("  输入与编辑", section_style)));
     lines.push(Line::from(""));
-    lines.push(key_entry(
-        "Ctrl+C / Ctrl+D",
-        "Quit (press twice to confirm)",
-    ));
-    lines.push(key_entry("Ctrl+X", "Cut entire input line to clipboard"));
-    lines.push(key_entry(
-        "Ctrl+A",
-        "Copy visible chat viewport plus nearby context",
-    ));
-    lines.push(key_entry("Ctrl+U", "Clear input line"));
-    lines.push(key_entry("Ctrl+K", "Delete to end of input"));
+    lines.push(key_entry("Ctrl+C / Ctrl+D", "退出（按两次确认）"));
+    lines.push(key_entry("Ctrl+X", "剪切整行输入"));
+    lines.push(key_entry("Ctrl+A", "复制当前可见对话及相邻上下文"));
+    lines.push(key_entry("Ctrl+U", "清空输入行"));
+    lines.push(key_entry("Ctrl+K", "删除至输入末尾"));
     lines.push(key_entry(
         &format!("{} / {}", alt("Backspace"), alt("Delete")),
-        "Delete previous word in input",
+        "删除上一个词",
     ));
-    lines.push(key_entry(
-        "Cmd/Super+Backspace / Delete",
-        "Delete previous word in input",
-    ));
+    lines.push(key_entry("Cmd/Super+Backspace / Delete", "删除上一个词"));
     if cfg!(target_os = "macos") {
         // On macOS, Cmd+Left/Right default to effort cycling; Home/End and
         // Cmd+A/E still jump to the start/end of the input.
-        lines.push(key_entry("Home / End", "Move to start / end of input"));
+        lines.push(key_entry("Home / End", "移至输入开头或末尾"));
     } else {
-        lines.push(key_entry(
-            "Cmd/Super+Left / Right",
-            "Move to start / end of input",
-        ));
+        lines.push(key_entry("Cmd/Super+Left / Right", "移至输入开头或末尾"));
     }
-    lines.push(key_entry("Cmd/Super+Z", "Undo input edit"));
-    lines.push(key_entry("Cmd/Super+X / V", "Cut input / paste clipboard"));
-    lines.push(key_entry("Ctrl+S", "Stash / pop input (save for later)"));
-    lines.push(key_entry("Ctrl+Backspace", "Delete previous word in input"));
-    lines.push(key_entry("Ctrl+B / Ctrl+F", "Move by word left / right"));
-    lines.push(key_entry("Ctrl+Left / Right", "Move by word left / right"));
+    lines.push(key_entry("Cmd/Super+Z", "撤销输入修改"));
+    lines.push(key_entry("Cmd/Super+X / V", "剪切输入或粘贴剪贴板"));
+    lines.push(key_entry("Ctrl+S", "暂存或恢复输入"));
+    lines.push(key_entry("Ctrl+Backspace", "删除上一个词"));
+    lines.push(key_entry("Ctrl+B / Ctrl+F", "按词向左或向右移动"));
+    lines.push(key_entry("Ctrl+Left / Right", "按词向左或向右移动"));
     lines.push(key_entry(
         &format!("Shift+Enter / {}", alt("Enter")),
-        "Insert newline in input",
+        "插入换行",
     ));
     lines.push(key_entry(
         "Trailing \\ then Enter",
-        "Insert newline (fallback; run /terminal-setup to fix Shift+Enter)",
+        "插入换行（可用 /terminal-setup 配置 Shift+Enter）",
     ));
     lines.push(key_entry(
         "Ctrl+Enter / Cmd+Enter",
-        "Use opposite send mode while processing",
+        "处理时临时切换立即发送和排队",
     ));
-    lines.push(key_entry("Ctrl+Up", "Retrieve pending message for editing"));
-    lines.push(key_entry("Ctrl+Tab / Ctrl+T", "Toggle queue mode"));
-    lines.push(key_entry(
-        "Ctrl+R",
-        "Search prompt history (across sessions)",
-    ));
+    lines.push(key_entry("Ctrl+Up", "取回待发送消息进行编辑"));
+    lines.push(key_entry("Ctrl+Tab / Ctrl+T", "切换排队模式"));
+    lines.push(key_entry("Ctrl+R", "跨会话搜索输入历史"));
     lines.push(key_entry(
         &format!("Ctrl+V / {}", alt("V")),
-        "Paste clipboard (text or image)",
+        "粘贴文字或图片",
     ));
-    lines.push(key_entry(
-        &alt("A"),
-        "Quick-copy visible chat viewport plus nearby context",
-    ));
-    lines.push(key_entry(&alt("Y"), "Toggle chat selection/copy mode"));
-    lines.push(key_entry(&alt("S"), "Toggle typing scroll lock"));
-    lines.push(key_entry("Ctrl+P", "Toggle auto-poke for incomplete todos"));
-    lines.push(key_entry(&alt("X"), "Show/dismiss todo list card in chat"));
+    lines.push(key_entry(&alt("A"), "快速复制可见对话及相邻上下文"));
+    lines.push(key_entry(&alt("Y"), "切换对话选择和复制模式"));
+    lines.push(key_entry(&alt("S"), "切换输入时的滚动锁定"));
+    lines.push(key_entry("Ctrl+P", "切换未完成待办的自动提醒"));
+    lines.push(key_entry(&alt("X"), "显示或关闭对话中的待办卡片"));
     lines.push(key_entry(
         &crate::tui::keybind::effort_switch_keys_label(),
-        "Cycle effort (reasoning + swarm)",
+        "切换推理和代理协作强度",
     ));
     if cfg!(target_os = "macos") {
         lines.push(key_entry(
             &alt("Left / Right"),
-            &format!("Move by word in input (also {} / {})", alt("B"), alt("F")),
+            &format!("按词移动（也可用 {} / {}）", alt("B"), alt("F")),
         ));
     }
     if let Some(label) = app.dictation_key_label() {
-        lines.push(key_entry(&label, "Run configured dictation"));
+        lines.push(key_entry(&label, "运行已配置的听写工具"));
     }
     if let Some(label) = crate::tui::keybind::load_open_resume_key().label {
-        lines.push(key_entry(&label, "Open the /resume session picker"));
+        lines.push(key_entry(&label, "打开历史会话选择器"));
     }
     if let Some(label) = crate::tui::keybind::load_new_terminal_key().label {
-        lines.push(key_entry(
-            &label,
-            "Spawn new jcode session in a new terminal",
-        ));
+        lines.push(key_entry(&label, "在新终端中打开 JCode 会话"));
     }
 
     lines.push(Line::from(""));
@@ -726,7 +597,7 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
         String::new()
     };
 
-    let title = format!(" Help {} ", scroll_info);
+    let title = format!(" 帮助 {} ", scroll_info);
     let block = Block::default()
         .title(Span::styled(
             title,
@@ -735,7 +606,7 @@ pub(super) fn draw_help_overlay(frame: &mut Frame, area: Rect, scroll: usize, ap
                 .add_modifier(Modifier::BOLD),
         ))
         .title_bottom(Line::from(Span::styled(
-            " Esc to close · mouse wheel/j/k scroll · Space/PageUp page · /help <cmd> for details ",
+            " Esc 关闭 · 滚轮/j/k 滚动 · Space/PageUp 翻页 · /help <cmd> 详细帮助 ",
             Style::default().fg(dim_color()),
         )))
         .borders(Borders::ALL)
@@ -763,9 +634,9 @@ pub(super) fn draw_model_status_overlay(
     let dim_style = Style::default().fg(dim_color());
 
     let mut lines: Vec<Line<'static>> = Vec::new();
-    lines.push(Line::from(Span::styled("  Model Status", title_style)));
+    lines.push(Line::from(Span::styled("  模型状态", title_style)));
     lines.push(Line::from(Span::styled(
-        "  Live verification evidence for provider/model behavior in jcode",
+        "  服务商和模型在 JCode 中的实测记录",
         dim_style,
     )));
     lines.push(Line::from(""));
@@ -787,7 +658,7 @@ pub(super) fn draw_model_status_overlay(
 
     lines.push(Line::from(""));
     lines.push(Line::from(Span::styled(
-        "  ↑/↓ scroll, PgUp/PgDn page, c copy report, q/Esc close",
+        "  ↑/↓ 滚动 · PgUp/PgDn 翻页 · c 复制报告 · q/Esc 关闭",
         dim_style,
     )));
 

@@ -955,7 +955,7 @@ if (-not $Version) {
 if (-not $Version) { Write-Err "Failed to determine latest version" }
 
 $VersionNum = $Version.TrimStart('v')
-$DownloadBases = Get-JcodeReleaseDownloadBases $Version
+$DownloadBases = if ($ResolvedArtifactExePath -or $ResolvedArtifactTgzPath) { @() } else { Get-JcodeReleaseDownloadBases $Version }
 
 $BuildsDir = Join-Path (Get-JcodeLocalAppDataDir) "jcode\builds"
 $StableDir = Join-Path $BuildsDir "stable"

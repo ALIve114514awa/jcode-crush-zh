@@ -70,10 +70,7 @@ impl App {
 
         items.push(AccountPickerItem::action(
             provider_scope.as_deref().unwrap_or("auth-doctor"),
-            provider_scope
-                .as_deref()
-                .unwrap_or("Authentication")
-                .to_string(),
+            provider_scope.as_deref().unwrap_or("认证方式").to_string(),
             "Diagnose login",
             if provider_scope.is_some() {
                 "review status, validation, and recommended next steps".to_string()
@@ -111,7 +108,7 @@ impl App {
 
             let state_label = match auth_state {
                 crate::auth::AuthState::Available => "ready",
-                crate::auth::AuthState::Expired => "needs attention",
+                crate::auth::AuthState::Expired => "需要处理",
                 crate::auth::AuthState::NotConfigured => "setup needed",
             };
 
@@ -134,7 +131,7 @@ impl App {
                 if provider.id == "openai" {
                     "Usage & provider settings"
                 } else {
-                    "Provider settings"
+                    "服务商设置"
                 },
                 format!(
                     "{} - {} - {}",
@@ -145,7 +142,7 @@ impl App {
             items.push(AccountPickerItem::action(
                 provider.id,
                 provider.display_name,
-                "Login / refresh",
+                "登录或刷新",
                 provider.menu_detail,
                 AccountPickerCommand::SubmitInput(format!("/account {} login", provider.id)),
             ));
@@ -284,7 +281,7 @@ impl App {
         items.push(AccountPickerItem::action(
             "defaults",
             "Global defaults",
-            "Default provider",
+            "默认服务商",
             cfg.provider.default_provider.as_deref().unwrap_or("auto"),
             AccountPickerCommand::PromptValue {
                 prompt: "Enter the default provider: claude, openai, copilot, gemini, openrouter, or auto.".to_string(),
@@ -311,7 +308,7 @@ impl App {
 
         let title = match provider_filter {
             Some(provider_id) => format!(" {} account center ", provider_id),
-            None => " Accounts ".to_string(),
+            None => " 账户 ".to_string(),
         };
         self.account_picker_overlay = Some(std::cell::RefCell::new(AccountPicker::with_summary(
             title, items, summary,
@@ -723,7 +720,7 @@ impl App {
         models.push(crate::tui::PickerEntry {
             name: "account center".to_string(),
             options: vec![crate::tui::PickerOption {
-                provider: "Accounts".to_string(),
+                provider: "账户".to_string(),
                 api_method: "manage".to_string(),
                 available: true,
                 detail: "settings, defaults, and other providers".to_string(),

@@ -77,7 +77,7 @@ impl App {
         let reply = match task.reply.try_recv() {
             Ok(reply) => reply,
             Err(tokio::sync::oneshot::error::TryRecvError::Empty) => return false,
-            Err(_) => Err("Remote status check stopped"),
+            Err(_) => Err("远程状态检查已停止"),
         };
         self.remote_login_onboarding.dismiss();
         if let Ok(Reply::Status { providers }) = reply
@@ -117,32 +117,43 @@ impl App {
             return;
         };
         let host = login.target.host();
-        let entries = [true, false].into_iter().map(|accept| PickerEntry {
-            name: if accept { "Yes" } else { "No" }.into(),
-            options: vec![PickerOption {
-                provider: host.into(),
-                api_method: if offer { "import local login?" } else { "copy this login?" }.into(),
-                available: true,
-                detail: match (offer, accept) {
-                    (true, true) => "Choose a local OpenAI or Claude login. No credentials read or copied yet.",
-                    (true, false) => "Use the normal login options on the remote host instead.",
-                    (false, true) => "Copy this selected login automatically to the trusted host above. No tokens to paste.",
-                    (false, false) => "Cancel without reading or copying local credentials.",
-                }.into(),
-                estimated_reference_cost_micros: None,
-            }],
-            action: PickerAction::RemoteImportDecision { accept },
-            selected_option: 0,
-            is_current: false,
-            is_default: false,
-            is_favorite: false,
-            recommended: false,
-            recommendation_rank: usize::MAX,
-            usage_score: 0,
-            old: false,
-            created_date: None,
-            effort: None,
-        }).collect();
+        let entries = [true, false]
+            .into_iter()
+            .map(|accept| PickerEntry {
+                name: if accept { "是" } else { "否" }.into(),
+                options: vec![PickerOption {
+                    provider: host.into(),
+                    api_method: if offer {
+                        "import local login?"
+                    } else {
+                        "copy this login?"
+                    }
+                    .into(),
+                    available: true,
+                    detail: match (offer, accept) {
+                        (true, true) => {
+                            "请选择本地 OpenAI 或 Claude 登录。此时尚未读取或复制凭据。"
+                        }
+                        (true, false) => "改用远程主机上的常规登录方式。",
+                        (false, true) => "将所选登录信息复制到上述可信主机，无需手动粘贴 Token。",
+                        (false, false) => "取消，不读取或复制本地凭据。",
+                    }
+                    .into(),
+                    estimated_reference_cost_micros: None,
+                }],
+                action: PickerAction::RemoteImportDecision { accept },
+                selected_option: 0,
+                is_current: false,
+                is_default: false,
+                is_favorite: false,
+                recommended: false,
+                recommendation_rank: usize::MAX,
+                usage_score: 0,
+                old: false,
+                created_date: None,
+                effort: None,
+            })
+            .collect();
         self.inline_view_state = None;
         self.inline_interactive_state = Some(InlineInteractiveState {
             kind: PickerKind::Login,
@@ -153,7 +164,7 @@ impl App {
             filter: String::new(),
             preview: false,
         });
-        self.set_status_notice("Choose Yes or No with arrows (or Y/N), then Enter. Esc cancels.");
+        self.set_status_notice("方向键或 Y/N 选择是/否，Enter 确认，Esc 取消。");
     }
 
     pub(in crate::tui::app) fn select_ssh_import_decision(&mut self, accept: bool) {
@@ -245,7 +256,7 @@ mod tests {
                     .contains("No logins are configured on test-remote")
             );
             let picker = app.inline_interactive_state.as_ref().unwrap();
-            assert_eq!(picker.entries[picker.selected].name, "No");
+            assert_eq!(picker.entries[picker.selected].name, "否");
             app.handle_ssh_login_key(KeyCode::Enter, KeyModifiers::NONE, None);
             assert!(app.remote_login.as_ref().unwrap().phase == Phase::Choosing);
             assert!(app.inline_interactive_state.as_ref().unwrap().entries.len() > 2);

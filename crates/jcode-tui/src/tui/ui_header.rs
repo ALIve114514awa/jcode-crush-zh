@@ -708,7 +708,7 @@ fn build_persistent_header_with_auth(
         )];
         if is_canary {
             spans.push(Span::styled(
-                " self-dev".to_string(),
+                " 自开发模式".to_string(),
                 Style::default().fg(dim_color()),
             ));
         }
@@ -724,9 +724,9 @@ fn build_persistent_header_with_auth(
     if let Some(server_name) = server_name.as_deref() {
         let server_icon = app.server_display_icon().unwrap_or_default();
         let server_text = if server_icon.is_empty() {
-            format!("server: {}", capitalize(server_name))
+            format!("服务器：{}", capitalize(server_name))
         } else {
-            format!("server: {} {}", capitalize(server_name), server_icon)
+            format!("服务器：{} {}", capitalize(server_name), server_icon)
         };
         let mut spans = vec![Span::styled(
             server_text.clone(),
@@ -743,8 +743,8 @@ fn build_persistent_header_with_auth(
 
     if !session_name.is_empty() {
         let client_text = match connection_icon {
-            Some(conn) => format!("client: {} {} {}", capitalize(&session_name), icon, conn),
-            None => format!("client: {} {}", capitalize(&session_name), icon),
+            Some(conn) => format!("客户端：{} {} {}", capitalize(&session_name), icon, conn),
+            None => format!("客户端：{} {}", capitalize(&session_name), icon),
         };
         let mut spans = vec![Span::styled(
             client_text.clone(),
@@ -763,7 +763,7 @@ fn build_persistent_header_with_auth(
         // layout down) when it lands a few dozen milliseconds later.
         lines.push(
             Line::from(Span::styled(
-                "client: connecting…".to_string(),
+                "客户端：正在连接…".to_string(),
                 Style::default().fg(dim_color()),
             ))
             .alignment(align),
@@ -804,7 +804,7 @@ fn build_persistent_header_with_auth(
     // wraps when the render area subtracts side margins.
     let fit_width = w.saturating_sub(4);
     if !model_is_placeholder && !nice_model.is_empty() {
-        let hint = "/model to switch · ";
+        let hint = "/model 切换 · ";
         if model_line_len + hint.chars().count() <= fit_width {
             model_line_len += hint.chars().count();
             model_spans.push(Span::styled(
@@ -842,9 +842,9 @@ fn build_persistent_header_with_auth(
         let version_text = if is_running_stable_release() {
             let tag = jcode_build_meta::git_tag();
             if tag.is_empty() || tag.contains('-') {
-                format!("{} · release", semver())
+                format!("{} · 正式版", semver())
             } else {
-                format!("{} · release {}", semver(), tag)
+                format!("{} · 正式版 {}", semver(), tag)
             }
         } else {
             semver().to_string()
@@ -881,10 +881,10 @@ fn build_header_lines_with_auth(
         // The native protocol reports the active route, not a complete remote
         // credential inventory. Do not render the laptop's (or an empty)
         // inventory as if it described providers configured on the server.
-        (format!("/login to authenticate on {host}"), Vec::new())
+        (format!("/login 登录 {host}"), Vec::new())
     } else {
         (
-            "/login to add provider".to_string(),
+            "/login 添加服务商".to_string(),
             build_auth_status_lines(auth, active),
         )
     };
@@ -907,7 +907,7 @@ fn build_header_lines_with_auth(
             .take(MAX_MCPS)
             .map(|(name, count)| {
                 if *count > 0 {
-                    format!("{} ({} tools)", name, count)
+                    format!("{}（{} 个工具）", name, count)
                 } else {
                     format!("{} (…)", name)
                 }
@@ -918,7 +918,7 @@ fn build_header_lines_with_auth(
             mcp_text.push_str(&format!(" +{} more", mcps.len() - MAX_MCPS));
         }
         if mcp_text.chars().count() > w {
-            mcp_text = format!("mcp: {} servers", mcps.len());
+            mcp_text = format!("MCP：{} 个服务器", mcps.len());
         }
         lines.push(
             Line::from(Span::styled(mcp_text, Style::default().fg(dim_color()))).alignment(align),
@@ -933,12 +933,12 @@ fn build_header_lines_with_auth(
             .take(MAX_SKILLS)
             .map(|s| format!("/{}", s))
             .collect();
-        let mut skills_text = format!("skills: {}", shown.join(" "));
+        let mut skills_text = format!("技能：{}", shown.join(" "));
         if skills.len() > MAX_SKILLS {
             skills_text.push_str(&format!(" +{} more", skills.len() - MAX_SKILLS));
         }
         if skills_text.chars().count() > w {
-            skills_text = format!("skills: {} loaded", skills.len());
+            skills_text = format!("技能：已加载 {} 项", skills.len());
         }
         lines.push(
             Line::from(Span::styled(skills_text, Style::default().fg(dim_color())))
@@ -998,7 +998,7 @@ pub(super) fn build_updates_box_lines(width: u16, max_lines: usize) -> Vec<Line<
     if has_more {
         content.push(Line::from(Span::styled(
             format!(
-                "  …{} more · /changelog to see all",
+                "  另有 {} 项 · /changelog 查看全部",
                 new_entries.len() - display_count
             ),
             Style::default().fg(dim_color()),
@@ -1009,7 +1009,7 @@ pub(super) fn build_updates_box_lines(width: u16, max_lines: usize) -> Vec<Line<
     }
 
     render_rounded_box(
-        "Updates",
+        "更新",
         content,
         w.saturating_sub(2),
         Style::default().fg(dim_color()),
@@ -1196,20 +1196,20 @@ mod tests {
         let lines = rendered_header_lines(&app, 120);
         let server_line = lines
             .iter()
-            .find(|line| line.contains("server:"))
+            .find(|line| line.contains("服务器："))
             .expect("server line");
         let client_line = lines
             .iter()
-            .find(|line| line.contains("client:"))
+            .find(|line| line.contains("客户端："))
             .expect("client line");
 
         assert!(
-            server_line.contains("server: Blazing 🔥 · v0.14.2-dev"),
+            server_line.contains("服务器：Blazing 🔥 · v0.14.2-dev"),
             "server line should carry the server version: {server_line}"
         );
         let client_version = compact_version_label(jcode_build_meta::version());
         assert!(
-            client_line.contains("client: Fox"),
+            client_line.contains("客户端：Fox"),
             "client line should keep the session name: {client_line}"
         );
         assert!(
@@ -1233,11 +1233,11 @@ mod tests {
         let lines = rendered_header_lines(&app, 160);
         let server_line = lines
             .iter()
-            .find(|line| line.contains("server:"))
+            .find(|line| line.contains("服务器："))
             .expect("server line");
         let client_line = lines
             .iter()
-            .find(|line| line.contains("client:"))
+            .find(|line| line.contains("客户端："))
             .expect("client line");
 
         assert!(
@@ -1263,7 +1263,7 @@ mod tests {
         let lines = rendered_header_lines(&app, 18);
         let server_line = lines
             .iter()
-            .find(|line| line.contains("server:"))
+            .find(|line| line.contains("服务器："))
             .expect("server line");
         assert!(
             !server_line.contains("v0.14.2"),
@@ -1276,13 +1276,13 @@ mod tests {
         let app = create_test_app();
         let lines = rendered_header_lines(&app, 120);
         assert!(
-            !lines.iter().any(|line| line.contains("server:")),
+            !lines.iter().any(|line| line.contains("服务器：")),
             "local mode should not render a server line: {lines:?}"
         );
         assert!(
             !lines
                 .iter()
-                .any(|line| line.contains("client:") && line.contains(" · v")),
+                .any(|line| line.contains("客户端：") && line.contains(" · v")),
             "local mode client line should not carry a version label: {lines:?}"
         );
     }
@@ -1301,13 +1301,13 @@ mod tests {
         let lines = rendered_header_lines(&app, 120);
         let client_line = lines
             .iter()
-            .find(|line| line.contains("client:"))
+            .find(|line| line.contains("客户端："))
             .expect("client line");
 
         // The session name's own icon (ram -> 🐏) must be present rather than
         // being replaced by the connection icon.
         assert!(
-            client_line.contains("client: Ram 🐏"),
+            client_line.contains("客户端：Ram 🐏"),
             "client line should show the name icon: {client_line}"
         );
         // The connection icon is kept as a trailing hint, not a replacement.
@@ -1331,11 +1331,11 @@ mod tests {
         let lines = rendered_header_lines(&app, 120);
         let client_line = lines
             .iter()
-            .find(|line| line.contains("client:"))
+            .find(|line| line.contains("客户端："))
             .expect("client line");
 
         assert!(
-            client_line.contains("client: Fox 🦊"),
+            client_line.contains("客户端：Fox 🦊"),
             "client line should show the name icon: {client_line}"
         );
         assert!(
@@ -1371,7 +1371,7 @@ mod tests {
             "Claude Fable 5"
         );
         // Placeholders and slashed ids pass through untouched.
-        assert_eq!(prettify_model_id("loading session…"), "loading session…");
+        assert_eq!(prettify_model_id("正在加载会话…"), "正在加载会话…");
         assert_eq!(
             prettify_model_id("deepseek/deepseek-chat"),
             "deepseek/deepseek-chat"
@@ -1439,8 +1439,8 @@ mod tests {
         );
         // Placeholders pass through untouched.
         assert_eq!(
-            header_model_display_name("loading session…", ""),
-            "loading session…"
+            header_model_display_name("正在加载会话…", ""),
+            "正在加载会话…"
         );
         assert_eq!(header_model_display_name("connected", ""), "Connected");
     }
@@ -1623,7 +1623,7 @@ mod tests {
             .collect::<String>();
 
         assert!(rendered.contains("GPT-5.4"));
-        assert!(!rendered.contains("connecting to server…"));
+        assert!(!rendered.contains("正在连接服务器…"));
 
         if let Some(prev_model) = prev_model {
             crate::env::set_var("JCODE_MODEL", prev_model);
@@ -1675,7 +1675,7 @@ mod tests {
             crate::env::remove_var("JCODE_PROVIDER");
         }
 
-        assert!(rendered.contains("loading session…"), "{rendered}");
+        assert!(rendered.contains("正在加载会话…"), "{rendered}");
         assert!(!rendered.contains("(unknown)"));
         assert!(!rendered.contains("(remote)"));
     }
@@ -1695,7 +1695,7 @@ mod tests {
             .collect::<String>();
 
         assert!(
-            !rendered.contains("connecting to server…"),
+            !rendered.contains("正在连接服务器…"),
             "brief connecting placeholder should not render the secondary detail line"
         );
         assert!(!rendered.contains("(remote)"));

@@ -2,7 +2,6 @@ use anyhow::Result;
 use chrono::Utc;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use jcode_base::safety::{self, PermissionRequest, Urgency};
-use jcode_core::util::truncate_str;
 use jcode_tui_style::rgb;
 use ratatui::{
     Frame,
@@ -116,7 +115,7 @@ impl PermissionsApp {
         }
 
         let outer = Block::default()
-            .title(format!(" Permissions ({} pending) ", self.requests.len()))
+            .title(format!(" 权限确认（{} 项待处理）", self.requests.len()))
             .title_style(
                 Style::default()
                     .fg(Color::White)
@@ -177,16 +176,18 @@ impl PermissionsApp {
             };
 
             let urgency_label = match req.urgency {
-                Urgency::High => "high",
-                Urgency::Normal => "normal",
-                Urgency::Low => "low",
+                Urgency::High => "高",
+                Urgency::Normal => "普通",
+                Urgency::Low => "低",
             };
 
             let action_text = format!(" [{}] {}", urgency_label, req.action);
 
-            let remaining = area
-                .width
-                .saturating_sub(action_text.len() as u16 + age.len() as u16 + 6);
+            let remaining = area.width.saturating_sub(
+                unicode_width::UnicodeWidthStr::width(action_text.as_str()) as u16
+                    + unicode_width::UnicodeWidthStr::width(age.as_str()) as u16
+                    + 6,
+            );
             let padding = " ".repeat(remaining as usize);
 
             lines.push(Line::from(vec![
@@ -252,7 +253,7 @@ impl PermissionsApp {
 
         push_wrapped_field(
             &mut lines,
-            " Summary: ",
+            " 摘要：",
             &review.summary,
             area.width,
             label_style,
@@ -260,7 +261,7 @@ impl PermissionsApp {
         );
         push_wrapped_field(
             &mut lines,
-            " Why: ",
+            " 原因：",
             &review.why_permission_needed,
             area.width,
             label_style,
@@ -270,7 +271,7 @@ impl PermissionsApp {
         if let Some(current_activity) = review.current_activity.as_deref() {
             push_wrapped_field(
                 &mut lines,
-                " Activity: ",
+                " 活动：",
                 current_activity,
                 area.width,
                 label_style,
@@ -282,7 +283,7 @@ impl PermissionsApp {
             let plan = summarize_list(&review.planned_steps, " -> ", 4);
             push_wrapped_field(
                 &mut lines,
-                " Plan: ",
+                " 计划：",
                 &plan,
                 area.width,
                 label_style,
@@ -294,7 +295,7 @@ impl PermissionsApp {
             let files = summarize_list(&review.files, ", ", 6);
             push_wrapped_field(
                 &mut lines,
-                " Files: ",
+                " 文件：",
                 &files,
                 area.width,
                 label_style,
@@ -306,7 +307,7 @@ impl PermissionsApp {
             let commands = summarize_list(&review.commands, " ; ", 4);
             push_wrapped_field(
                 &mut lines,
-                " Commands: ",
+                " 命令：",
                 &commands,
                 area.width,
                 label_style,
@@ -317,7 +318,7 @@ impl PermissionsApp {
         if let Some(expected_outcome) = review.expected_outcome.as_deref() {
             push_wrapped_field(
                 &mut lines,
-                " Outcome: ",
+                " 预期结果：",
                 expected_outcome,
                 area.width,
                 label_style,
@@ -328,7 +329,7 @@ impl PermissionsApp {
         if let Some(impact) = review.impact.as_deref() {
             push_wrapped_field(
                 &mut lines,
-                " Impact: ",
+                " 影响：",
                 impact,
                 area.width,
                 label_style,
@@ -340,7 +341,7 @@ impl PermissionsApp {
             let risks = summarize_list(&review.risks, " | ", 4);
             push_wrapped_field(
                 &mut lines,
-                " Risks: ",
+                " 风险：",
                 &risks,
                 area.width,
                 label_style,
@@ -351,7 +352,7 @@ impl PermissionsApp {
         if let Some(rollback_plan) = review.rollback_plan.as_deref() {
             push_wrapped_field(
                 &mut lines,
-                " Rollback: ",
+                " 恢复方式：",
                 rollback_plan,
                 area.width,
                 label_style,
@@ -367,7 +368,7 @@ impl PermissionsApp {
         ]));
 
         lines.push(Line::from(vec![
-            Span::styled(" Created: ", label_style),
+            Span::styled(" 创建时间：", label_style),
             Span::styled(
                 req.created_at.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
                 Style::default().fg(rgb(100, 100, 110)),
@@ -378,7 +379,7 @@ impl PermissionsApp {
             lines.push(Line::from(vec![
                 Span::styled(" ⏳ ", Style::default().fg(rgb(255, 200, 100))),
                 Span::styled(
-                    "Agent is waiting for this decision",
+                    "代理正在等待你的决定",
                     Style::default().fg(rgb(255, 200, 100)),
                 ),
             ]));
@@ -388,7 +389,7 @@ impl PermissionsApp {
             lines.push(Line::raw(""));
             lines.push(Line::from(vec![
                 Span::styled(
-                    " Deny reason: ",
+                    " 拒绝原因：",
                     Style::default()
                         .fg(rgb(255, 100, 100))
                         .add_modifier(Modifier::BOLD),
@@ -403,15 +404,15 @@ impl PermissionsApp {
 
     fn render_help(&self, frame: &mut Frame, area: Rect) {
         let help_items = if self.deny_input.is_some() {
-            vec![("Enter", "confirm deny"), ("Esc", "cancel")]
+            vec![("Enter", "确认拒绝"), ("Esc", "取消")]
         } else {
             vec![
-                ("a", "approve"),
-                ("d", "deny"),
-                ("A", "approve all"),
-                ("D", "deny all"),
-                ("↑↓", "navigate"),
-                ("q", "quit"),
+                ("a", "允许"),
+                ("d", "拒绝"),
+                ("A", "全部允许"),
+                ("D", "全部拒绝"),
+                ("↑↓", "移动"),
+                ("q", "退出"),
             ]
         };
 
@@ -441,7 +442,7 @@ impl PermissionsApp {
 
     fn render_empty(&self, frame: &mut Frame, area: Rect) {
         let outer = Block::default()
-            .title(" Permissions ")
+            .title(" 权限确认 ")
             .title_style(
                 Style::default()
                     .fg(Color::White)
@@ -456,12 +457,12 @@ impl PermissionsApp {
         let lines = vec![
             Line::raw(""),
             Line::from(Span::styled(
-                "  No pending permission requests.",
+                "  没有待处理的权限请求。",
                 Style::default().fg(rgb(120, 120, 130)),
             )),
             Line::raw(""),
             Line::from(Span::styled(
-                "  Press q to quit.",
+                "  按 q 退出。",
                 Style::default().fg(rgb(80, 80, 90)),
             )),
         ];
@@ -470,7 +471,7 @@ impl PermissionsApp {
 
     fn render_done(&self, frame: &mut Frame, area: Rect) {
         let outer = Block::default()
-            .title(" Permissions ")
+            .title(" 权限确认 ")
             .title_style(
                 Style::default()
                     .fg(Color::White)
@@ -486,20 +487,20 @@ impl PermissionsApp {
 
         if self.approved_count > 0 {
             lines.push(Line::from(vec![Span::styled(
-                format!("  ✓ {} approved", self.approved_count),
+                format!("  ✓ 已允许 {} 项", self.approved_count),
                 Style::default().fg(rgb(100, 200, 100)),
             )]));
         }
         if self.denied_count > 0 {
             lines.push(Line::from(vec![Span::styled(
-                format!("  ✗ {} denied", self.denied_count),
+                format!("  ✗ 已拒绝 {} 项", self.denied_count),
                 Style::default().fg(rgb(255, 100, 100)),
             )]));
         }
 
         lines.push(Line::raw(""));
         lines.push(Line::from(Span::styled(
-            "  Done! Press any key to exit.",
+            "  已完成，按任意键退出。",
             Style::default().fg(rgb(140, 140, 150)),
         )));
 
@@ -751,13 +752,31 @@ fn wrap_by_chars(text: &str, width: usize) -> Vec<String> {
     if text.is_empty() || width == 0 {
         return Vec::new();
     }
-    let chars: Vec<char> = text.chars().collect();
+    use unicode_width::UnicodeWidthChar;
     let mut out = Vec::new();
-    let mut i = 0;
-    while i < chars.len() {
-        let end = (i + width).min(chars.len());
-        out.push(chars[i..end].iter().collect());
-        i = end;
+    let mut line = String::new();
+    let mut used = 0;
+    for ch in text.chars() {
+        let cells = ch.width().unwrap_or(0);
+        if ch == '\n' {
+            out.push(std::mem::take(&mut line));
+            used = 0;
+            continue;
+        }
+        if !line.is_empty() && used + cells > width {
+            out.push(std::mem::take(&mut line));
+            used = 0;
+        }
+        if cells > width {
+            line.push('…');
+            used += 1;
+        } else {
+            line.push(ch);
+            used += cells;
+        }
+    }
+    if !line.is_empty() {
+        out.push(line);
     }
     out
 }
@@ -775,9 +794,9 @@ fn push_wrapped_field(
         return;
     }
 
-    let label_width = label.chars().count();
+    let label_width = unicode_width::UnicodeWidthStr::width(label);
     let first_width = area_width.saturating_sub(label_width as u16).max(1) as usize;
-    let continued_width = area_width.saturating_sub(1).max(1) as usize;
+    let continued_width = first_width;
 
     let mut chunks = wrap_by_chars(value, first_width);
     if chunks.is_empty() {
@@ -807,26 +826,56 @@ fn push_wrapped_field(
 fn format_age(duration: chrono::Duration) -> String {
     let secs = duration.num_seconds();
     if secs < 60 {
-        "just now".to_string()
+        "刚刚".to_string()
     } else if secs < 3600 {
         let mins = secs / 60;
-        format!("{} min{} ago", mins, if mins == 1 { "" } else { "s" })
+        format!("{} 分钟前", mins)
     } else if secs < 86400 {
         let hours = secs / 3600;
-        format!("{} hour{} ago", hours, if hours == 1 { "" } else { "s" })
+        format!("{} 小时前", hours)
     } else {
         let days = secs / 86400;
-        format!("{} day{} ago", days, if days == 1 { "" } else { "s" })
+        format!("{} 天前", days)
     }
 }
 
 fn truncate(s: &str, max_len: usize) -> String {
-    if s.len() <= max_len {
-        s.to_string()
-    } else if max_len > 3 {
-        format!("{}…", truncate_str(s, max_len - 1))
-    } else {
-        truncate_str(s, max_len).to_string()
+    use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+    if s.width() <= max_len {
+        return s.to_string();
+    }
+    let budget = max_len.saturating_sub(1);
+    let mut result = String::new();
+    let mut used = 0;
+    for ch in s.chars() {
+        let cells = ch.width().unwrap_or(0);
+        if used + cells > budget {
+            break;
+        }
+        result.push(ch);
+        used += cells;
+    }
+    if max_len > 0 {
+        result.push('…');
+    }
+    result
+}
+
+#[cfg(test)]
+mod chinese_layout_tests {
+    use super::{truncate, wrap_by_chars};
+    use unicode_width::UnicodeWidthStr;
+
+    #[test]
+    fn permission_text_wraps_without_losing_chinese_or_emoji() {
+        let text = "修改配置并运行测试 😀 file.ts";
+        for columns in 2..=30 {
+            let lines = wrap_by_chars(text, columns);
+            assert_eq!(lines.concat(), text);
+            assert!(lines.iter().all(|line| line.width() <= columns));
+            assert!(truncate(text, columns).width() <= columns);
+        }
+        assert_eq!(wrap_by_chars("权限\n说明", 4), ["权限", "说明"]);
     }
 }
 
@@ -843,7 +892,7 @@ pub fn run_permissions() -> Result<()> {
                 if expired.len() == 1 { "" } else { "s" }
             );
         }
-        println!("No pending permission requests.");
+        println!("没有待处理的权限请求。");
         return Ok(());
     }
 

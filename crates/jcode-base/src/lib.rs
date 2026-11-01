@@ -57,6 +57,7 @@ pub mod kv_cache_monitor;
 pub mod lid_override;
 pub mod live_tests;
 pub mod logging;
+pub use jcode_lsp as lsp;
 pub mod login_qr;
 pub mod mcp;
 pub mod memory;

@@ -177,6 +177,8 @@ fn test_mcp_http_server_is_not_stdio() {
     let config: McpConfig = serde_json::from_str(json).unwrap();
     let server = config.servers.get("remote").unwrap();
     assert!(!server.is_stdio());
+    assert!(server.is_remote());
+    assert!(server.is_supported());
     assert_eq!(server.url.as_deref(), Some("https://example.com/mcp"));
 }
 

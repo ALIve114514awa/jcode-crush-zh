@@ -1919,7 +1919,7 @@ fn render_ambient_widget(data: &InfoWidgetData, inner: Rect) -> Framed {
 
     // Status line with icon
     let (icon, status_text, status_color) = match &info.status {
-        AmbientStatus::Idle => ("○", "Idle".to_string(), rgb(120, 120, 130)),
+        AmbientStatus::Idle => ("○", "空闲".to_string(), rgb(120, 120, 130)),
         AmbientStatus::Running { detail } => {
             ("●", format!("Running: {}", detail), rgb(100, 200, 100))
         }

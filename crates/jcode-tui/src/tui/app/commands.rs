@@ -781,20 +781,20 @@ fn handle_subagent_model_command(app: &mut App, trimmed: &str) -> bool {
         app.session.subagent_model = None;
         let _ = app.session.save();
         app.push_display_message(DisplayMessage::system(format!(
-            "Subagent model reset to inherit the current model ({}).",
+            "子代理将跟随当前模型（{}）。",
             app.provider.model()
         )));
-        app.set_status_notice("Subagent model: inherit");
+        app.set_status_notice("子代理模型：跟随主代理");
         return true;
     }
 
     app.session.subagent_model = Some(rest.to_string());
     let _ = app.session.save();
     app.push_display_message(DisplayMessage::system(format!(
-        "Subagent model pinned to {} for this session.",
+        "此会话的子代理模型已固定为 {}。",
         rest
     )));
-    app.set_status_notice(format!("Subagent model → {}", rest));
+    app.set_status_notice(format!("子代理模型 → {}", rest));
     true
 }
 
@@ -1412,9 +1412,9 @@ fn handle_catchup_command(app: &mut App, trimmed: &str) -> bool {
             let total = candidates.len();
             let Some(target) = candidates.first() else {
                 app.push_display_message(DisplayMessage::system(
-                    "No sessions currently need catch up.".to_string(),
+                    "当前没有需要查看进度的会话。".to_string(),
                 ));
-                app.set_status_notice("Catch Up: none waiting");
+                app.set_status_notice("会话摘要：没有待查看项");
                 return true;
             };
 
@@ -1429,10 +1429,10 @@ fn handle_catchup_command(app: &mut App, trimmed: &str) -> bool {
                 true,
             );
             app.push_display_message(DisplayMessage::system(format!(
-                "Queued Catch Up for {}.",
+                "已将 {} 的摘要加入队列。",
                 target_name,
             )));
-            app.set_status_notice(format!("Catch Up → {}", target_name));
+            app.set_status_notice(format!("会话摘要 → {}", target_name));
             true
         }
         _ => {

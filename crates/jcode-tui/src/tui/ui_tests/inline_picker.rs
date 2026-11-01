@@ -17,10 +17,7 @@ fn render_inline_picker(state: &TestState, width: u16, height: u16) -> Vec<Strin
     let buf = terminal.backend().buffer();
     let mut lines = Vec::with_capacity(height as usize);
     for y in 0..height {
-        let mut line = String::with_capacity(width as usize);
-        for x in 0..width {
-            line.push_str(buf[(x, y)].symbol());
-        }
+        let line = crate::tui::test_harness::buffer_line_text(buf, y);
         lines.push(line.trim_end().to_string());
     }
     lines
@@ -109,7 +106,7 @@ fn render_model_suggestions(
         .unwrap();
     let buf = terminal.backend().buffer();
     (0..height)
-        .map(|y| (0..width).map(|x| buf[(x, y)].symbol()).collect::<String>())
+        .map(|y| crate::tui::test_harness::buffer_line_text(buf, y))
         .collect()
 }
 
@@ -167,7 +164,7 @@ fn model_suggestions_show_empty_filter_and_route_notices() {
     route.available = false;
     route.detail = "Login required".to_string();
     let text = render_model_suggestions(&state, 100, 20, 12).join("\n");
-    assert!(text.contains("unavailable · Login required"), "{text}");
+    assert!(text.contains("不可用 · Login required"), "{text}");
     state
         .inline_interactive_state
         .as_mut()
@@ -175,7 +172,7 @@ fn model_suggestions_show_empty_filter_and_route_notices() {
         .filtered
         .clear();
     let text = render_model_suggestions(&state, 100, 20, 12).join("\n");
-    assert!(text.contains("No matching models"), "{text}");
+    assert!(text.contains("没有匹配的模型"), "{text}");
 }
 
 #[test]
@@ -204,7 +201,7 @@ fn model_suggestions_full_frame_keeps_composer_position() {
             .unwrap();
         let buf = terminal.backend().buffer();
         (0..40)
-            .map(|y| (0..120).map(|x| buf[(x, y)].symbol()).collect::<String>())
+            .map(|y| crate::tui::test_harness::buffer_line_text(buf, y))
             .collect::<Vec<_>>()
     };
     let with_picker = render(&state);

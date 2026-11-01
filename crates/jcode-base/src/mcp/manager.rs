@@ -18,6 +18,11 @@ use tokio::sync::{Mutex, RwLock, watch};
 /// server from blocking a single tool call forever (and never blocks spawn).
 const CONNECT_ON_CALL_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
+fn can_share_server(name: &str, config: &McpServerConfig, pooled: Option<&McpConfig>) -> bool {
+    let Some(pooled) = pooled else { return false };
+    config.shared && (!config.is_remote() || pooled.servers.get(name) == Some(config))
+}
+
 type OwnedConnectionResult = Option<std::result::Result<(), String>>;
 type OwnedConnectionSender = watch::Sender<OwnedConnectionResult>;
 type OwnedConnecting = Arc<Mutex<HashMap<String, OwnedConnectionSender>>>;
@@ -183,6 +188,10 @@ impl McpManager {
     pub async fn connect_all(&self) -> Result<(usize, Vec<(String, String)>)> {
         let mut total_successes = 0;
         let mut total_failures = Vec::new();
+        let pooled_config = match &self.pool {
+            Some(pool) => Some(pool.config().await),
+            None => None,
+        };
 
         // Disabled servers stay in config (so they can be connected on demand
         // by name) but are never auto-spawned (issue #436).
@@ -192,7 +201,7 @@ impl McpManager {
             .servers
             .iter()
             .filter(|(_, config)| config.is_enabled())
-            .partition(|(_, config)| config.shared && self.pool.is_some());
+            .partition(|(name, config)| can_share_server(name, config, pooled_config.as_ref()));
 
         // Connect shared servers via pool
         if let Some(pool) = &self.pool {
@@ -265,8 +274,11 @@ impl McpManager {
                  coarse usage counts are shared per the disclosed policy"
             ));
         }
-        if config.shared {
-            if let Some(pool) = &self.pool {
+        if let Some(pool) = &self.pool {
+            // Same-named remote servers in different projects can use different
+            // URLs or accounts. Only an identical configuration may reuse the
+            // daemon's global connection; project overrides remain session owned.
+            if can_share_server(name, config, Some(&pool.config().await)) {
                 pool.connect_server(name, config).await?;
                 if let Some(handle) = pool.get_handle(name).await {
                     self.pool_handles
@@ -492,7 +504,12 @@ impl McpManager {
                 "MCP: connecting to '{server}' on first tool call (connect-on-first-call)"
             ));
             let connect = self.connect(server, &config);
-            match tokio::time::timeout(CONNECT_ON_CALL_TIMEOUT, connect).await {
+            let connect_timeout = if config.is_remote() {
+                std::time::Duration::from_secs(config.timeout_secs.unwrap_or(120).max(1))
+            } else {
+                CONNECT_ON_CALL_TIMEOUT
+            };
+            match tokio::time::timeout(connect_timeout, connect).await {
                 Ok(Ok(())) => {
                     // Retry once now that we should be connected.
                     {
@@ -520,7 +537,7 @@ impl McpManager {
                     anyhow::bail!(
                         "MCP server '{server}' did not connect within {}s; tool '{tool}' is \
                          unavailable right now",
-                        CONNECT_ON_CALL_TIMEOUT.as_secs()
+                        connect_timeout.as_secs()
                     );
                 }
             }

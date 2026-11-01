@@ -49,10 +49,10 @@ mod tests {
 
         for provider in providers.iter().copied() {
             let command = format!("/account {} login", provider.id);
-            let title = format!("Login / refresh {}", provider.display_name);
+            let title = format!("登录或刷新 {}", provider.display_name);
             let subtitle = format!("state-space account action for {}", provider.id);
             let mut picker = AccountPicker::with_summary(
-                " Accounts ",
+                " 账户 ",
                 vec![AccountPickerItem::action(
                     provider.id,
                     provider.display_name,
@@ -64,7 +64,7 @@ mod tests {
                     provider_count: 1,
                     setup_count: 1,
                     default_provider: Some("auto".to_string()),
-                    default_model: Some("provider default".to_string()),
+                    default_model: Some("服务商默认".to_string()),
                     ..AccountPickerSummary::default()
                 },
             );

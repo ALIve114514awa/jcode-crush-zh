@@ -76,7 +76,7 @@ impl App {
         message.push_str(&format!(
             "  - Credentials: {}\n",
             if configured_key {
-                "configured"
+                "已配置"
             } else {
                 "not configured (/login jcode)"
             }
@@ -204,7 +204,7 @@ impl App {
         let validation = crate::auth::validation::load_all();
         let icon = |state: crate::auth::AuthState| match state {
             crate::auth::AuthState::Available => "ok",
-            crate::auth::AuthState::Expired => "needs attention",
+            crate::auth::AuthState::Expired => "需要处理",
             crate::auth::AuthState::NotConfigured => "not configured",
         };
         let providers = crate::provider_catalog::auth_status_login_providers();

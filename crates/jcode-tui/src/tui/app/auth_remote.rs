@@ -454,11 +454,11 @@ impl App {
             return;
         }
         if matches!(login.phase, Phase::ImportOffer | Phase::ImportConsent) {
-            if matches!(input, "no" | "n" | "No" | "N") {
+            if matches!(input, "no" | "n" | "否" | "N") {
                 self.select_ssh_import_decision(false);
                 return;
             }
-            if !matches!(input, "yes" | "y" | "Yes" | "Y" | "confirm") {
+            if !matches!(input, "yes" | "y" | "是" | "Y" | "confirm") {
                 self.set_status_notice("Choose Yes or No with arrows and Enter, or type yes/no. No local credentials were accessed.");
                 return;
             }

@@ -185,7 +185,7 @@ pub(super) fn openai_compatible_profile_id_for_route(route: &PickerOption) -> Op
 }
 
 pub(super) fn model_entry_saved_spec(entry: &PickerEntry) -> String {
-    if entry.name == "inherit coordinator" {
+    if entry.name == "跟随主代理" {
         return "inherit".to_string();
     }
     let bare_name = model_entry_base_name(entry);
@@ -203,7 +203,7 @@ pub(super) fn agent_model_inherit_fallback_label(target: AgentModelTarget) -> &'
         AgentModelTarget::Swarm
         | AgentModelTarget::Review
         | AgentModelTarget::Judge
-        | AgentModelTarget::Ambient => "provider default",
+        | AgentModelTarget::Ambient => "服务商默认",
     }
 }
 
@@ -221,7 +221,7 @@ pub(super) fn normalize_agent_model_summary(
 
     match summary.to_ascii_lowercase().as_str() {
         "unknown" | "(unknown)" | "unknown model" => fallback.to_string(),
-        "(provider default)" => "provider default".to_string(),
+        "(provider default)" => "服务商默认".to_string(),
         "sidecar auto-select" | "(sidecar auto-select)" | "(extraction auto-select)" => {
             "extraction auto-select".to_string()
         }

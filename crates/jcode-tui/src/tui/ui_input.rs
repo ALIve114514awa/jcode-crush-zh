@@ -49,8 +49,8 @@ fn composer_mode(input: &str, is_remote_mode: bool) -> ComposerMode {
 
 fn shell_mode_hint(mode: ComposerMode) -> Option<&'static str> {
     match mode {
-        ComposerMode::ShellLocal => Some("  shell mode · Enter runs locally"),
-        ComposerMode::ShellRemote => Some("  shell mode · Enter runs on server"),
+        ComposerMode::ShellLocal => Some("  命令模式 · Enter 在本机执行"),
+        ComposerMode::ShellRemote => Some("  命令模式 · Enter 在服务器执行"),
         _ => None,
     }
 }
@@ -145,20 +145,20 @@ pub(super) fn draw_prompt_history_search_overlay(
 
     let mut lines: Vec<Line<'static>> = Vec::new();
     lines.push(Line::from(vec![
-        Span::styled("(history search) ", dim),
+        Span::styled("（历史搜索）", dim),
         Span::styled(view.query.clone(), accent),
         Span::styled("█", accent),
         Span::styled(
-            "  ↑↓ select · ↵ insert · Esc cancel",
+            "  ↑↓ 选择 · Enter 插入 · Esc 取消",
             Style::default().fg(dim_color()),
         ),
     ]));
 
     if view.matches.is_empty() {
         if view.query.trim().is_empty() {
-            lines.push(Line::from(Span::styled("  type to search history", dim)));
+            lines.push(Line::from(Span::styled("  输入内容以搜索历史", dim)));
         } else {
-            lines.push(Line::from(Span::styled("  no matches", dim)));
+            lines.push(Line::from(Span::styled("  没有匹配结果", dim)));
         }
     } else {
         // Keep the selected row inside the visible window.
@@ -189,7 +189,7 @@ pub(super) fn draw_prompt_history_search_overlay(
             {
                 spans.push(Span::styled(
                     format!(
-                        "  +{} more",
+                        "  另有 {} 项",
                         view.matches.len() - (window_start + VISIBLE_LIMIT)
                     ),
                     dim,
@@ -308,7 +308,7 @@ fn command_suggestion_lines(
             }
             if i + 1 == limited.len() && more_count > 0 {
                 spans.push(Span::styled(
-                    format!("  +{} more", more_count),
+                    format!("  另有 {} 项", more_count),
                     Style::default().fg(dim_color()),
                 ));
             }
@@ -618,27 +618,24 @@ fn occasional_session_history_warning(
 
     let tokens = format_stream_tokens(total_tokens);
     let compactions = if compaction_count > 0 {
-        format!(
-            " and {compaction_count} compact{}",
-            if compaction_count == 1 { "" } else { "s" }
-        )
+        format!("，已压缩 {compaction_count} 次")
     } else {
         String::new()
     };
 
     Some(format!(
-        "Session history: {tokens} tokens processed{compactions}; /clear starts fresh context"
+        "会话历史：已处理 {tokens} Token{compactions}；/clear 可开始新上下文"
     ))
 }
 
 fn connection_phase_label(phase: &ConnectionPhase) -> String {
     match phase {
-        ConnectionPhase::Authenticating => "refreshing auth".to_string(),
-        ConnectionPhase::Connecting => "connecting".to_string(),
-        ConnectionPhase::SendingRequest => "sending context".to_string(),
-        ConnectionPhase::WaitingForResponse => "waiting for response".to_string(),
-        ConnectionPhase::Streaming => "streaming".to_string(),
-        ConnectionPhase::Retrying { attempt, max } => format!("retrying {}/{}", attempt, max),
+        ConnectionPhase::Authenticating => "正在刷新认证".to_string(),
+        ConnectionPhase::Connecting => "正在连接".to_string(),
+        ConnectionPhase::SendingRequest => "正在发送上下文".to_string(),
+        ConnectionPhase::WaitingForResponse => "正在等待回复".to_string(),
+        ConnectionPhase::Streaming => "正在接收".to_string(),
+        ConnectionPhase::Retrying { attempt, max } => format!("正在重试 {}/{}", attempt, max),
     }
 }
 
@@ -646,7 +643,7 @@ fn display_connection_type(connection_type: &str) -> String {
     match connection_type.trim() {
         "https/sse" => "https".to_string(),
         "websocket/persistent-fresh" => "websocket".to_string(),
-        "websocket/persistent-reuse" => "existing websocket".to_string(),
+        "websocket/persistent-reuse" => "已有 WebSocket".to_string(),
         other => other.to_string(),
     }
 }
@@ -659,10 +656,10 @@ fn normalize_status_detail(detail: &str) -> Option<String> {
 
     Some(
         match trimmed {
-            "fresh websocket" => "opening websocket",
-            "reusing websocket" => "using existing websocket",
-            "websocket healthcheck" => "verifying websocket",
-            "https fallback" => "using https fallback",
+            "fresh websocket" => "正在建立 WebSocket",
+            "reusing websocket" => "正在使用已有 WebSocket",
+            "websocket healthcheck" => "正在验证 WebSocket",
+            "https fallback" => "正在使用 HTTPS 回退连接",
             other => other,
         }
         .to_string(),
@@ -701,7 +698,7 @@ fn collect_transport_context_labels(
         .map(|upstream| upstream.trim().to_string())
         .filter(|upstream| !upstream.is_empty())
     {
-        labels.push(format!("via {}", upstream));
+        labels.push(format!("通过 {}", upstream));
     }
 
     labels
@@ -733,8 +730,8 @@ fn streaming_liveness_label(
         return time_str;
     }
     match stale_secs {
-        Some(s) if s > 10.0 => format!("(stalled {:.0}s) · {}", s, time_str),
-        Some(s) if s > 2.0 => format!("(no tokens {:.0}s) · {}", s, time_str),
+        Some(s) if s > 10.0 => format!("（已停滞 {:.0} 秒）· {}", s, time_str),
+        Some(s) if s > 2.0 => format!("（{:.0} 秒未收到 Token）· {}", s, time_str),
         _ => time_str,
     }
 }
@@ -764,21 +761,21 @@ fn append_batch_progress_spans(
 
     if total > 0 {
         spans.push(Span::styled(
-            format!(" · {}/{} done", completed, total),
+            format!(" · 已完成 {}/{}", completed, total),
             Style::default().fg(anim_color).bold(),
         ));
     }
 
     if let Some(running) = running_summary {
         spans.push(Span::styled(
-            format!(" · running: {}", running),
+            format!(" · 正在执行：{}", running),
             Style::default().fg(dim_color()),
         ));
     }
 
     if let Some(tool_name) = last_completed.filter(|_| completed < total) {
         spans.push(Span::styled(
-            format!(" · last done: {}", tool_name),
+            format!(" · 上次完成：{}", tool_name),
             Style::default().fg(dim_color()),
         ));
     }
@@ -804,7 +801,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
     );
 
     let queued_suffix = if pending_count > 0 {
-        format!(" · +{} queued", pending_count)
+        format!(" · 排队 {} 条", pending_count)
     } else {
         String::new()
     };
@@ -835,10 +832,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
         Line::from(vec![
             Span::styled(spinner, Style::default().fg(rgb(255, 193, 7))),
             Span::styled(
-                format!(
-                    " Rate limited. Auto-retry in {}...{}",
-                    time_str, queued_suffix
-                ),
+                format!(" 已触发限流，{} 后自动重试…{}", time_str, queued_suffix),
                 Style::default().fg(rgb(255, 193, 7)),
             ),
         ])
@@ -851,7 +845,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
                 let mut spans = vec![
                     Span::styled(spinner, Style::default().fg(ai_color())),
                     Span::styled(
-                        format!(" sending… {}", format_elapsed(elapsed)),
+                        format!(" 正在发送… {}", format_elapsed(elapsed)),
                         Style::default().fg(dim_color()),
                     ),
                 ];
@@ -892,7 +886,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
                 Line::from(spans)
             }
             ProcessingStatus::Thinking(_start) => {
-                let mut label = format!(" thinking… {}", format_elapsed(elapsed));
+                let mut label = format!(" 正在思考… {}", format_elapsed(elapsed));
                 append_transport_context(&mut label, app);
                 let mut spans = vec![
                     Span::styled(spinner, Style::default().fg(ai_color())),
@@ -928,7 +922,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
                     } else {
                         "kv".to_string()
                     };
-                    status_text = format!("⚠ {} cache miss · {}", miss_str, status_text);
+                    status_text = format!("⚠ {} 缓存未命中 · {}", miss_str, status_text);
                 }
                 let spans = streaming_status_spans(
                     spinner,
@@ -944,7 +938,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
                     Span::styled("↻ ", Style::default().fg(rgb(255, 193, 7))),
                     Span::styled(
                         format!(
-                            "network disconnected, waiting to retry · {} · {}",
+                            "网络已断开，等待重试 · {} · {}",
                             listener,
                             format_elapsed(elapsed)
                         ),
@@ -1026,7 +1020,7 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
                         "kv".to_string()
                     };
                     spans.push(Span::styled(
-                        format!(" · ⚠ {} cache miss", miss_str),
+                        format!(" · ⚠ {} 缓存未命中", miss_str),
                         Style::default().fg(rgb(255, 193, 7)),
                     ));
                 }
@@ -1099,7 +1093,7 @@ fn running_tool_header_spans(
     let mut spans = vec![
         Span::styled(spinner, Style::default().fg(anim_color)),
         Span::styled(
-            format!(" running {}", name),
+            format!(" 正在执行 {}", name),
             Style::default().fg(dim_color()),
         ),
     ];
@@ -1254,7 +1248,7 @@ mod tests {
         assert_eq!(spans.len(), 3);
         assert_eq!(spans[0].content.as_ref(), "*");
         assert_eq!(spans[0].style.fg, Some(accent));
-        assert_eq!(spans[1].content.as_ref(), " running bash");
+        assert_eq!(spans[1].content.as_ref(), " 正在执行 bash");
         assert_eq!(spans[1].style.fg, Some(dim_color()));
         assert!(!spans[1].style.add_modifier.contains(Modifier::BOLD));
         assert_eq!(spans[2].content.as_ref(), " · cargo test");
@@ -1306,8 +1300,8 @@ mod tests {
 
         let warning = occasional_session_history_warning(2_500_000, 4, Some(500_000), 100, 0)
             .expect("large sessions should get a brief reminder");
-        assert!(warning.contains("Session history: 2.5M tokens processed and 4 compacts"));
-        assert!(warning.contains("/clear starts fresh context"));
+        assert!(warning.contains("会话历史：已处理 2.5M Token，已压缩 4 次"));
+        assert!(warning.contains("/clear 可开始新上下文"));
         assert!(!warning.contains("Context usage"));
     }
 
@@ -1361,7 +1355,7 @@ mod tests {
         append_batch_progress_spans(&mut spans, anim_color, None, Some(3));
 
         assert_eq!(spans.len(), 1);
-        assert_eq!(spans[0].content.as_ref(), " · 0/3 done");
+        assert_eq!(spans[0].content.as_ref(), " · 已完成 0/3");
         assert_eq!(spans[0].style.fg, Some(anim_color));
         assert!(spans[0].style.add_modifier.contains(Modifier::BOLD));
     }
@@ -1386,8 +1380,8 @@ mod tests {
         );
 
         assert_eq!(spans.len(), 2);
-        assert_eq!(spans[0].content.as_ref(), " · 1/3 done");
-        assert_eq!(spans[1].content.as_ref(), " · last done: read");
+        assert_eq!(spans[0].content.as_ref(), " · 已完成 1/3");
+        assert_eq!(spans[1].content.as_ref(), " · 上次完成：read");
     }
 
     #[test]
@@ -1410,7 +1404,7 @@ mod tests {
         );
 
         assert_eq!(spans.len(), 1);
-        assert_eq!(spans[0].content.as_ref(), " · 3/3 done");
+        assert_eq!(spans[0].content.as_ref(), " · 已完成 3/3");
     }
 
     #[test]
@@ -1439,8 +1433,8 @@ mod tests {
         );
 
         assert_eq!(spans.len(), 2);
-        assert_eq!(spans[0].content.as_ref(), " · 0/2 done");
-        assert_eq!(spans[1].content.as_ref(), " · running: #1 bash");
+        assert_eq!(spans[0].content.as_ref(), " · 已完成 0/2");
+        assert_eq!(spans[1].content.as_ref(), " · 正在执行：#1 bash");
     }
 
     #[test]
@@ -1485,15 +1479,15 @@ mod tests {
         );
 
         assert_eq!(spans.len(), 2);
-        assert_eq!(spans[0].content.as_ref(), " · 0/3 done");
-        assert_eq!(spans[1].content.as_ref(), " · running: #1 bash +2");
+        assert_eq!(spans[0].content.as_ref(), " · 已完成 0/3");
+        assert_eq!(spans[1].content.as_ref(), " · 正在执行：#1 bash +2");
     }
 
     #[test]
     fn connection_phase_waiting_label_is_generic_response_wait() {
         assert_eq!(
             connection_phase_label(&ConnectionPhase::WaitingForResponse),
-            "waiting for response"
+            "正在等待回复"
         );
     }
 
@@ -1501,11 +1495,11 @@ mod tests {
     fn streaming_liveness_label_shows_quiet_stream_warning_before_message_end() {
         assert_eq!(
             streaming_liveness_label("4.2s".to_string(), Some(3.4), false),
-            "(no tokens 3s) · 4.2s"
+            "（3 秒未收到 Token）· 4.2s"
         );
         assert_eq!(
             streaming_liveness_label("12.0s".to_string(), Some(12.1), false),
-            "(stalled 12s) · 12.0s"
+            "（已停滞 12 秒）· 12.0s"
         );
     }
 
@@ -1523,12 +1517,12 @@ mod tests {
 
     #[test]
     fn streaming_status_spans_keep_spinner_while_finalizing() {
-        let spans = streaming_status_spans("⠋", "4.2s".to_string(), false, false, " · +1 queued");
+        let spans = streaming_status_spans("⠋", "4.2s".to_string(), false, false, " · 排队 1 条");
 
         assert_eq!(spans.len(), 3);
         assert_eq!(spans[0].content.as_ref(), "⠋");
         assert_eq!(spans[1].content.as_ref(), " 4.2s");
-        assert_eq!(spans[2].content.as_ref(), " · +1 queued");
+        assert_eq!(spans[2].content.as_ref(), " · 排队 1 条");
     }
 
     #[test]
@@ -1537,7 +1531,7 @@ mod tests {
 
         assert_eq!(spans.len(), 2);
         assert_eq!(spans[0].content.as_ref(), "⠋");
-        assert_eq!(spans[1].content.as_ref(), " finalizing");
+        assert_eq!(spans[1].content.as_ref(), " 正在完成");
     }
 
     #[test]
@@ -1546,9 +1540,9 @@ mod tests {
         push_queued_suffix(&mut spans, "");
         assert!(spans.is_empty(), "empty suffix should add no span");
 
-        push_queued_suffix(&mut spans, " · +2 queued");
+        push_queued_suffix(&mut spans, " · 排队 2 条");
         assert_eq!(spans.len(), 1);
-        assert_eq!(spans[0].content.as_ref(), " · +2 queued");
+        assert_eq!(spans[0].content.as_ref(), " · 排队 2 条");
         assert_eq!(spans[0].style.fg, Some(queued_color()));
     }
 
@@ -1561,7 +1555,7 @@ mod tests {
         );
         assert_eq!(
             display_connection_type("websocket/persistent-reuse"),
-            "existing websocket"
+            "已有 WebSocket"
         );
     }
 
@@ -1569,19 +1563,19 @@ mod tests {
     fn normalize_status_detail_uses_reader_friendly_labels() {
         assert_eq!(
             normalize_status_detail("fresh websocket").as_deref(),
-            Some("opening websocket")
+            Some("正在建立 WebSocket")
         );
         assert_eq!(
             normalize_status_detail("reusing websocket").as_deref(),
-            Some("using existing websocket")
+            Some("正在使用已有 WebSocket")
         );
         assert_eq!(
             normalize_status_detail("websocket healthcheck").as_deref(),
-            Some("verifying websocket")
+            Some("正在验证 WebSocket")
         );
         assert_eq!(
             normalize_status_detail("https fallback").as_deref(),
-            Some("using https fallback")
+            Some("正在使用 HTTPS 回退连接")
         );
     }
 
@@ -1594,8 +1588,8 @@ mod tests {
                 Some("OpenRouter".to_string())
             ),
             vec![
-                "using existing websocket".to_string(),
-                "via OpenRouter".to_string()
+                "正在使用已有 WebSocket".to_string(),
+                "通过 OpenRouter".to_string()
             ]
         );
 
@@ -1605,7 +1599,7 @@ mod tests {
                 Some(display_connection_type("https/sse")),
                 None,
             ),
-            vec!["using https fallback".to_string()]
+            vec!["正在使用 HTTPS 回退连接".to_string()]
         );
     }
 
@@ -1627,11 +1621,11 @@ mod tests {
     fn shell_mode_hint_reflects_execution_target() {
         assert_eq!(
             shell_mode_hint(ComposerMode::ShellLocal),
-            Some("  shell mode · Enter runs locally")
+            Some("  命令模式 · Enter 在本机执行")
         );
         assert_eq!(
             shell_mode_hint(ComposerMode::ShellRemote),
-            Some("  shell mode · Enter runs on server")
+            Some("  命令模式 · Enter 在服务器执行")
         );
         assert_eq!(shell_mode_hint(ComposerMode::Chat), None);
     }
@@ -1680,22 +1674,19 @@ pub(super) fn build_notification_spans(app: &dyn TuiState) -> Vec<Span<'static>>
         let label = if selection.has_action {
             if selection.selected_lines > 1 {
                 format!(
-                    "{} selection · {} chars · {} lines · Enter/Y copy · Esc exit",
+                    "{} 选择 · {} 字符 · {} 行 · Enter/Y 复制 · Esc 退出",
                     pane_label, selection.selected_chars, selection.selected_lines
                 )
             } else {
                 format!(
-                    "{} selection · {} chars · Enter/Y copy · Esc exit",
+                    "{} 选择 · {} 字符 · Enter/Y 复制 · Esc 退出",
                     pane_label, selection.selected_chars
                 )
             }
         } else if selection.dragging {
-            format!(
-                "{} selection · dragging… · Enter/Y copy · Esc exit",
-                pane_label
-            )
+            format!("{} 选择 · 正在拖选… · Enter/Y 复制 · Esc 退出", pane_label)
         } else {
-            format!("{} selection · drag to copy", pane_label)
+            format!("{} 选择 · 拖动以复制", pane_label)
         };
         spans.push(Span::styled(label, Style::default().fg(rgb(140, 220, 200))));
     }
@@ -1738,9 +1729,9 @@ pub(super) fn build_notification_spans(app: &dyn TuiState) -> Vec<Span<'static>>
                 Style::default().fg(Color::Red).bold()
             };
             let feedback_text = if success {
-                "✓ Copied! "
+                "✓ 已复制！"
             } else {
-                "✗ Copy failed "
+                "✗ 复制失败"
             };
             spans.push(Span::styled(feedback_text, feedback_style));
         }
@@ -1819,7 +1810,7 @@ pub(super) fn build_notification_spans(app: &dyn TuiState) -> Vec<Span<'static>>
                     .unwrap_or_default();
                 push_sep(&mut spans);
                 spans.push(Span::styled(
-                    format!("🧊 cache cold{}", tokens_str),
+                    format!("🧊 缓存冷启动{}", tokens_str),
                     Style::default().fg(rgb(140, 180, 255)),
                 ));
                 // Small gray age since the retention window elapsed, e.g. `1h 1m`.
@@ -1851,7 +1842,7 @@ pub(super) fn build_notification_spans(app: &dyn TuiState) -> Vec<Span<'static>>
                 };
                 push_sep(&mut spans);
                 spans.push(Span::styled(
-                    format!("⏳ cache {}{}", time_str, tokens_str),
+                    format!("⏳ 缓存 {}{}", time_str, tokens_str),
                     Style::default().fg(rgb(255, 193, 7)),
                 ));
             }
@@ -1861,7 +1852,7 @@ pub(super) fn build_notification_spans(app: &dyn TuiState) -> Vec<Span<'static>>
     if app.has_stashed_input() {
         push_sep(&mut spans);
         spans.push(Span::styled(
-            "📋 stash",
+            "📋 暂存",
             Style::default().fg(rgb(255, 193, 7)),
         ));
     }
@@ -2312,8 +2303,11 @@ fn overscroll_is_placeholder(model: &str) -> bool {
     let m = model.trim().to_ascii_lowercase();
     m.starts_with("connecting")
         || m.starts_with("loading")
+        || m.starts_with("正在连接")
+        || m.starts_with("正在加载")
         || m == "connected"
         || m.contains("connecting to server")
+        || m.contains("正在连接服务器")
 }
 
 /// Inert runtime provider labels (remote/replay/test-harness) shown before the
@@ -2353,10 +2347,10 @@ fn overscroll_auth_label(
     match method {
         AuthMethod::Unknown => None,
         AuthMethod::ApiKey | AuthMethod::AnthropicApiKey | AuthMethod::OpenAIApiKey => {
-            Some(("API key", rgb(180, 180, 190)))
+            Some(("API 密钥", rgb(180, 180, 190)))
         }
         AuthMethod::OpenRouterApiKey | AuthMethod::OpenCodeApiKey => {
-            Some(("API key", rgb(140, 180, 255)))
+            Some(("API 密钥", rgb(140, 180, 255)))
         }
         AuthMethod::AnthropicOAuth => Some(("OAuth", rgb(255, 160, 100))),
         AuthMethod::OpenAIOAuth => Some(("OAuth", rgb(100, 200, 180))),
@@ -2505,7 +2499,7 @@ pub(super) fn draw_input(
         )));
     } else if app.next_prompt_new_session_armed() {
         hint_shown = true;
-        let hint = "  ↗ Next prompt opens a new session";
+        let hint = "  ↗ 下次输入将打开新会话";
         hint_line = Some(hint.trim().to_string());
         lines.push(Line::from(Span::styled(
             hint,
@@ -2514,9 +2508,9 @@ pub(super) fn draw_input(
     } else if app.is_processing() && !input_text.is_empty() {
         hint_shown = true;
         let hint = if app.queue_mode() {
-            "  Ctrl/Cmd+Enter to send now"
+            "  Ctrl/Cmd+Enter 立即发送"
         } else {
-            "  Ctrl/Cmd+Enter to queue"
+            "  Ctrl/Cmd+Enter 加入队列"
         };
         hint_line = Some(hint.trim().to_string());
         lines.push(Line::from(Span::styled(

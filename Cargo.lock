@@ -894,6 +894,8 @@ dependencies = [
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
+ "log",
+ "prettyplease",
  "proc-macro2",
  "quote",
  "regex",
@@ -1359,6 +1361,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1af709f1f33454bf52eadfc8c78b3b9ef9cb26fb54d16dc9cd9a7299f899fd1b"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1785,7 +1796,7 @@ version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb"
 dependencies = [
- "convert_case",
+ "convert_case 0.10.0",
  "proc-macro2",
  "quote",
  "rustc_version",
@@ -3144,7 +3155,7 @@ checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
 name = "jcode"
-version = "0.94.0"
+version = "0.94.0-crush.2.zhCN"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -3339,6 +3350,8 @@ dependencies = [
  "jcode-gateway-types",
  "jcode-import-core",
  "jcode-logging",
+ "jcode-lsp",
+ "jcode-mcp-bridge",
  "jcode-memory-types",
  "jcode-message-types",
  "jcode-plan",
@@ -3537,6 +3550,32 @@ dependencies = [
  "jcode-storage",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "jcode-lsp"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "jcode-tool-core",
+ "jcode-tool-types",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "toml",
+ "url",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "jcode-mcp-bridge"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tempfile",
+ "url",
 ]
 
 [[package]]
@@ -4236,6 +4275,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "unicode-width",
 ]
 
 [[package]]
@@ -4315,6 +4355,7 @@ dependencies = [
  "jcode-tui-style",
  "ratatui",
  "serde_json",
+ "unicode-width",
 ]
 
 [[package]]
@@ -4364,6 +4405,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "unicode-width",
 ]
 
 [[package]]
@@ -6721,6 +6763,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0a22bf72f515cc4189dd7c63d016f6de92a11eee98ddf7dd64794198f6eb34e"
 dependencies = [
  "rquickjs-core",
+ "rquickjs-macro",
 ]
 
 [[package]]
@@ -6736,11 +6779,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rquickjs-macro"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a2ea9adb03b669c933482ff740b683cd36be7cef23891657a8ccb850401d286"
+dependencies = [
+ "convert_case 0.12.0",
+ "indexmap",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "rquickjs-core",
+ "syn 3.0.3",
+]
+
+[[package]]
 name = "rquickjs-sys"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cee271d0eeba64f0915b846cb7ae02e16faf3dfdffdca91731101d9d30fe3423"
 dependencies = [
+ "bindgen",
  "cc",
 ]
 

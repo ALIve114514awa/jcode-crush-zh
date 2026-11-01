@@ -12,6 +12,7 @@ use super::dim_color;
 use crate::tui::TuiState;
 use crate::tui::color_support::rgb;
 use ratatui::{prelude::*, widgets::Paragraph};
+use unicode_width::UnicodeWidthStr;
 
 const GAP: u16 = 1;
 
@@ -29,7 +30,7 @@ fn push_esc_skip_hint(lines: &mut Vec<Line<'static>>, align: Alignment) {
     lines.push(Line::from(""));
     lines.push(
         Line::from(Span::styled(
-            "Esc to skip onboarding (log in later with /login).",
+            "按 Esc 跳过引导，稍后可用 /login 登录。",
             Style::default().fg(dim_color()),
         ))
         .alignment(align),
@@ -119,9 +120,9 @@ fn lozenge_pill_spans(label: &str, filled: bool) -> Vec<Span<'static>> {
 /// and fill carry the selection visually so no instruction sentence is needed.
 fn yes_no_pill_line(yes_highlighted: bool, align: Alignment) -> Line<'static> {
     let mut spans = Vec::new();
-    spans.extend(lozenge_pill_spans("Yes", yes_highlighted));
+    spans.extend(lozenge_pill_spans("是", yes_highlighted));
     spans.push(Span::raw("   "));
-    spans.extend(lozenge_pill_spans("No", !yes_highlighted));
+    spans.extend(lozenge_pill_spans("否", !yes_highlighted));
     Line::from(spans).alignment(align)
 }
 
@@ -130,7 +131,7 @@ fn yes_no_pill_line(yes_highlighted: bool, align: Alignment) -> Line<'static> {
 /// read a "Press Enter" instruction). Uses the same lozenge style as the Yes/No
 /// pills: a filled accent capsule when `focused`, a hollow outline otherwise.
 fn continue_pill_line(focused: bool, align: Alignment) -> Line<'static> {
-    Line::from(lozenge_pill_spans("Continue", focused)).alignment(align)
+    Line::from(lozenge_pill_spans("继续", focused)).alignment(align)
 }
 
 /// The summary-screen action row. A new user can import the logins we found,
@@ -141,17 +142,11 @@ fn import_summary_pills_line(
 ) -> Line<'static> {
     use crate::tui::ImportSummaryPill as Pill;
     let mut spans = Vec::new();
-    spans.extend(lozenge_pill_spans("Continue", focused == Pill::Continue));
+    spans.extend(lozenge_pill_spans("继续", focused == Pill::Continue));
     spans.push(Span::raw("   "));
-    spans.extend(lozenge_pill_spans(
-        "Import less",
-        focused == Pill::ImportLess,
-    ));
+    spans.extend(lozenge_pill_spans("选择导入", focused == Pill::ImportLess));
     spans.push(Span::raw("   "));
-    spans.extend(lozenge_pill_spans(
-        "Telemetry settings",
-        focused == Pill::Telemetry,
-    ));
+    spans.extend(lozenge_pill_spans("遥测设置", focused == Pill::Telemetry));
     Line::from(spans).alignment(align)
 }
 
@@ -168,7 +163,7 @@ fn telemetry_settings_lines(
     let mut lines: Vec<Line<'static>> = Vec::new();
     lines.push(
         Line::from(Span::styled(
-            "Telemetry settings",
+            "遥测设置",
             Style::default()
                 .fg(welcome_accent())
                 .add_modifier(Modifier::BOLD),
@@ -180,18 +175,18 @@ fn telemetry_settings_lines(
     let options = [
         (
             Choice::Everything,
-            "Share full transcripts (30-day retention)",
-            "Includes prompts, model responses, reasoning, code, and tool input/output",
+            "分享完整对话（保留 30 天）",
+            "包含提示词、模型回复、推理、代码及工具输入输出",
         ),
         (
             Choice::NoContent,
-            "No prompts or transcripts",
-            "Usage stats and crash reports only",
+            "不分享提示词和对话",
+            "仅分享使用统计和崩溃报告",
         ),
         (
             Choice::Nothing,
-            "Send nothing",
-            "We stop seeing crashes and can't fix them",
+            "不发送任何数据",
+            "开发者将无法收到崩溃报告以排查问题",
         ),
     ];
     for (choice, label, caption) in options {
@@ -203,18 +198,14 @@ fn telemetry_settings_lines(
     if env_forced_off {
         lines.push(
             Line::from(Span::styled(
-                "Your environment already disables telemetry (JCODE_NO_TELEMETRY).",
+                "环境变量 JCODE_NO_TELEMETRY 已禁用遥测。",
                 dim,
             ))
             .alignment(align),
         );
     }
     lines.push(
-        Line::from(Span::styled(
-            "Esc goes back. Change this later with /telemetry.",
-            dim,
-        ))
-        .alignment(align),
+        Line::from(Span::styled("按 Esc 返回，稍后可用 /telemetry 修改。", dim)).alignment(align),
     );
     lines
 }
@@ -265,7 +256,7 @@ fn import_two_column_lines(prompt: &crate::tui::LoginImportPrompt) -> Vec<Line<'
     let left_width = prompt
         .rows
         .iter()
-        .map(|r| 2 + r.provider_summary.chars().count() + 2 + r.source_name.chars().count() + 1)
+        .map(|r| 2 + r.provider_summary.width() + 2 + r.source_name.width() + 1)
         .max()
         .unwrap_or(0)
         .max(12);
@@ -276,7 +267,7 @@ fn import_two_column_lines(prompt: &crate::tui::LoginImportPrompt) -> Vec<Line<'
     const COL_W: usize = 5;
     const GAP: &str = "  ";
     let center_cell = |s: &str| {
-        let len = s.chars().count();
+        let len = s.width();
         let total = COL_W.saturating_sub(len);
         let left = total / 2;
         let right = total - left;
@@ -295,9 +286,9 @@ fn import_two_column_lines(prompt: &crate::tui::LoginImportPrompt) -> Vec<Line<'
     out.push(
         Line::from(vec![
             Span::raw(" ".repeat(left_width)),
-            Span::styled(center_cell("Yes"), header_style),
+            Span::styled(center_cell("是"), header_style),
             Span::raw(GAP),
-            Span::styled(center_cell("No"), header_style),
+            Span::styled(center_cell("否"), header_style),
         ])
         .alignment(Alignment::Center),
     );
@@ -320,7 +311,7 @@ fn import_two_column_lines(prompt: &crate::tui::LoginImportPrompt) -> Vec<Line<'
             "{}{} ({})",
             cursor_marker, row.provider_summary, row.source_name
         );
-        let pad = left_width.saturating_sub(left_text.chars().count());
+        let pad = left_width.saturating_sub(left_text.width());
 
         // Filled circle marks the chosen column; the other is a hollow outline.
         let (yes_glyph, yes_style, no_glyph, no_style) = if row.checked {
@@ -350,7 +341,7 @@ fn import_two_column_lines(prompt: &crate::tui::LoginImportPrompt) -> Vec<Line<'
 /// Welcome title line, rendered above the phase body.
 fn welcome_title_line() -> Line<'static> {
     Line::from(Span::styled(
-        "Welcome to jcode onboarding",
+        "欢迎使用 JCode",
         Style::default()
             .fg(welcome_accent())
             .add_modifier(Modifier::BOLD),
@@ -363,7 +354,7 @@ fn welcome_title_line() -> Line<'static> {
 /// what is selectable, so a one-liner is enough.
 fn keyboard_hint_line() -> Line<'static> {
     Line::from(Span::styled(
-        "Use your keyboard to navigate.",
+        "使用方向键选择，按 Enter 确认。",
         Style::default().fg(dim_color()),
     ))
     .alignment(Alignment::Center)
@@ -390,7 +381,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     // the user to "log in again" right after they chose to import.
                     lines.push(
                         Line::from(Span::styled(
-                            "Importing your logins…",
+                            "正在导入登录信息…",
                             Style::default()
                                 .fg(welcome_accent())
                                 .add_modifier(Modifier::BOLD),
@@ -399,7 +390,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     );
                     lines.push(
                         Line::from(Span::styled(
-                            "Hang tight, this only takes a moment.",
+                            "请稍候，即将完成。",
                             Style::default().fg(dim_color()),
                         ))
                         .alignment(align),
@@ -411,7 +402,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     let reason = error.unwrap_or_default();
                     lines.push(
                         Line::from(Span::styled(
-                            "We couldn't import those logins.",
+                            "无法导入这些登录信息。",
                             Style::default()
                                 .fg(rgb(240, 180, 120))
                                 .add_modifier(Modifier::BOLD),
@@ -427,7 +418,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     lines.push(Line::from(""));
                     lines.push(
                         Line::from(Span::styled(
-                            "No problem - you can log in directly.",
+                            "你可以改为直接登录。",
                             Style::default()
                                 .fg(welcome_accent())
                                 .add_modifier(Modifier::BOLD),
@@ -436,7 +427,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     );
                     lines.push(
                         Line::from(Span::styled(
-                            "Press Enter to choose a provider (OpenAI, Anthropic, and more).",
+                            "按 Enter 选择服务商（OpenAI、Anthropic 等）。",
                             Style::default().fg(dim_color()),
                         ))
                         .alignment(align),
@@ -447,7 +438,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     if let Some(agent) = repair_agent_label {
                         lines.push(
                             Line::from(Span::styled(
-                                format!("Press H to have {agent} help fix this for you."),
+                                format!("按 H 让 {agent} 协助修复。"),
                                 Style::default().fg(welcome_accent()),
                             ))
                             .alignment(align),
@@ -457,7 +448,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                 None => {
                     lines.push(
                         Line::from(Span::styled(
-                            "First, log in to get started.",
+                            "请先登录以开始使用。",
                             Style::default()
                                 .fg(welcome_accent())
                                 .add_modifier(Modifier::BOLD),
@@ -466,7 +457,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     );
                     lines.push(
                         Line::from(Span::styled(
-                            "Press Enter to pick who to log in with (OpenAI, Anthropic, and more).",
+                            "按 Enter 选择服务商（OpenAI、Anthropic 等）。",
                             Style::default().fg(dim_color()),
                         ))
                         .alignment(align),
@@ -491,10 +482,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     let found = prompt.rows.len();
                     lines.push(
                         Line::from(Span::styled(
-                            format!(
-                                "Choose how to get started. We found {found} existing login{}:",
-                                if found == 1 { "" } else { "s" }
-                            ),
+                            format!("发现 {found} 项已有登录信息，请选择导入方式："),
                             Style::default()
                                 .fg(welcome_accent())
                                 .add_modifier(Modifier::BOLD),
@@ -513,7 +501,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                     // and countdown sentence to keep the screen uncluttered.
                     lines.push(
                         Line::from(Span::styled(
-                            "Import:",
+                            "导入：",
                             Style::default()
                                 .fg(welcome_accent())
                                 .add_modifier(Modifier::BOLD),
@@ -538,7 +526,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
         OnboardingWelcomeKind::LoginOpenAi { yes_highlighted } => {
             lines.push(
                 Line::from(Span::styled(
-                    "Log in to OpenAI?",
+                    "是否登录 OpenAI？",
                     Style::default()
                         .fg(welcome_accent())
                         .add_modifier(Modifier::BOLD),
@@ -563,7 +551,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
             lines.push(Line::from(""));
             lines.push(
                 Line::from(Span::styled(
-                    format!("Continue where you left off in {cli_label}?"),
+                    format!("是否继续你在 {cli_label} 中的会话？"),
                     Style::default()
                         .fg(welcome_accent())
                         .add_modifier(Modifier::BOLD),
@@ -578,7 +566,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
             lines.push(Line::from(""));
             lines.push(
                 Line::from(Span::styled(
-                    format!("Opens the resume menu automatically in {seconds_left}s…"),
+                    format!("{seconds_left} 秒后自动打开会话恢复菜单…"),
                     Style::default().fg(dim_color()),
                 ))
                 .alignment(align),
@@ -603,7 +591,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
                             .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
-                        format!("(type {})", prompt),
+                        format!("（输入 {}）", prompt),
                         Style::default().fg(dim_color()),
                     ),
                 ]
@@ -622,7 +610,7 @@ fn welcome_body_lines(app: &dyn TuiState) -> Vec<Line<'static>> {
             lines.push(Line::from(""));
             lines.push(
                 Line::from(Span::styled(
-                    format!("Press 1-{} or type anything to start", suggestions.len()),
+                    format!("按 1-{} 选择，或直接输入内容开始", suggestions.len()),
                     Style::default().fg(dim_color()),
                 ))
                 .alignment(align),

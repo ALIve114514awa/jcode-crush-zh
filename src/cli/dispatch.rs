@@ -1050,9 +1050,7 @@ async fn run_default_command(args: Args) -> Result<()> {
     }
 
     if server_running && explicit_provider_or_model {
-        output::stderr_info(
-            "Server already running; provider/model flags only apply when starting a new server.",
-        );
+        output::stderr_info("服务器已在运行；服务商和模型参数仅在启动新服务器时生效。");
         output::stderr_info(format!(
             "Current server settings control `/model`. Restart server to apply: --provider {}{}",
             args.provider.as_arg_value(),
@@ -1065,7 +1063,7 @@ async fn run_default_command(args: Args) -> Result<()> {
 
     if server_running && explicit_tool_options {
         output::stderr_info(
-            "Server already running; tool flags only apply when starting a new server. Restart server or edit [tools] in config.toml to change the active toolset.",
+            "服务器已在运行；工具参数仅在启动新服务器时生效。重启服务器或修改 config.toml 的 [tools] 设置。",
         );
     }
 
@@ -1077,7 +1075,7 @@ async fn run_default_command(args: Args) -> Result<()> {
         // socket that has no live listener AND whose daemon lock is free, so it
         // can never disturb a running server.
         if server::reap_stale_socket_if_dead(&server::socket_path()).await {
-            output::stderr_info("Removed a stale jcode socket from a previous server.");
+            output::stderr_info("已清理上次服务器遗留的连接端点。");
         }
 
         maybe_prompt_server_bootstrap_login(&args.provider).await?;
@@ -1091,7 +1089,7 @@ async fn run_default_command(args: Args) -> Result<()> {
 
     startup_profile::mark("pre_tui_client");
     if std::env::var("JCODE_RESUMING").is_err() && server_running {
-        output::stderr_info("Connecting to server...");
+        output::stderr_info("正在连接服务器…");
     }
     tui_launch::run_tui_client(
         args.resume,
@@ -1528,7 +1526,7 @@ async fn spawn_server_with_lifetime(
 
     startup_profile::mark("server_spawn_start");
     match lifetime {
-        ServerLifetime::Shared => output::stderr_info("Starting server..."),
+        ServerLifetime::Shared => output::stderr_info("正在启动服务器…"),
         ServerLifetime::OwnedByThisProcess => output::stderr_info(format!(
             "Starting a temporary server on {} for this run...",
             socket_path.display()

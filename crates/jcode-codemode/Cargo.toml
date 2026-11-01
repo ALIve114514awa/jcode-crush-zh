@@ -24,5 +24,10 @@ tokio = { version = "1", features = ["macros", "rt", "sync", "time"] }
 [target.'cfg(not(target_os = "freebsd"))'.dependencies]
 rquickjs = { version = "0.14", features = ["futures"] }
 
+# Windows GNU LLVM has the MinGW ABI but no shipped rquickjs binding file.
+# Generate bindings from the actual headers with libclang for this target.
+[target.'cfg(all(windows, target_abi = "llvm"))'.dependencies]
+rquickjs = { version = "0.14", features = ["futures", "bindgen"] }
+
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "sync", "time"] }

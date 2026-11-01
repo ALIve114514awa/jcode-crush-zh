@@ -18,7 +18,14 @@ pub enum UsageOverlayStatus {
 
 impl UsageOverlayStatus {
     pub fn label_for_display(self) -> &'static str {
-        self.label()
+        match self {
+            Self::Loading => "加载中",
+            Self::Good => "正常",
+            Self::Warning => "需关注",
+            Self::Critical => "用量较高",
+            Self::Error => "错误",
+            Self::Info => "信息",
+        }
     }
 
     pub fn label(self) -> &'static str {
@@ -99,11 +106,12 @@ pub fn item_matches_filter(item: &UsageOverlayItem, filter: &str) -> bool {
     }
 
     let haystack = format!(
-        "{} {} {} {} {}",
+        "{} {} {} {} {} {}",
         item.id,
         item.title,
         item.subtitle,
         item.status.label(),
+        item.status.label_for_display(),
         item.detail_lines.join(" ")
     )
     .to_lowercase();
@@ -141,17 +149,16 @@ pub enum OverlayAction {
 impl UsageOverlay {
     pub fn loading() -> Self {
         Self::new(
-            " Usage ",
+            " 用量 ",
             vec![UsageOverlayItem::new(
                 "loading",
-                "Refreshing usage",
-                "Fetching limits from connected providers",
+                "正在刷新用量",
+                "正在查询已连接服务商的限额",
                 UsageOverlayStatus::Loading,
                 vec![
-                    "Fetching usage limits from all connected providers...".to_string(),
+                    "正在查询所有已连接服务商的用量限制…".to_string(),
                     "".to_string(),
-                    "This view will update automatically when the usage report returns."
-                        .to_string(),
+                    "收到用量报告后，此视图会自动更新。".to_string(),
                 ],
             )],
             UsageOverlaySummary::default(),
@@ -179,47 +186,43 @@ impl UsageOverlay {
 
         if refreshing {
             let subtitle = if total > 0 {
-                format!("Refreshing providers ({}/{})", completed.min(total), total)
+                format!("正在刷新服务商（{}/{}）", completed.min(total), total)
             } else if from_cache {
-                "Showing cached usage while refreshing providers".to_string()
+                "正在刷新服务商，暂时显示缓存用量".to_string()
             } else {
-                "Fetching usage limits from connected providers".to_string()
+                "正在查询已连接服务商的用量限制".to_string()
             };
             items.push(UsageOverlayItem::new(
                 "refreshing",
-                "Refreshing usage",
+                "正在刷新用量",
                 subtitle,
                 UsageOverlayStatus::Loading,
                 vec![
-                    "## Live refresh".to_string(),
+                    "## 实时刷新".to_string(),
                     if from_cache {
-                        "• Cached results are visible immediately.".to_string()
+                        "• 立即显示已有缓存结果。".to_string()
                     } else {
-                        "• Waiting for provider responses.".to_string()
+                        "• 正在等待服务商返回结果。".to_string()
                     },
                     if total > 0 {
-                        format!(
-                            "• Completed {}/{} provider checks.",
-                            completed.min(total),
-                            total
-                        )
+                        format!("• 已完成 {}/{} 项服务商查询。", completed.min(total), total)
                     } else {
-                        "• Discovering connected providers.".to_string()
+                        "• 正在查找已连接的服务商。".to_string()
                     },
-                    "• This panel updates as each provider returns.".to_string(),
+                    "• 每收到一个服务商的结果，面板就会更新。".to_string(),
                 ],
             ));
         } else if items.is_empty() {
             items.push(UsageOverlayItem::new(
                 "no-providers",
-                "No connected providers",
-                "Connect Claude or OpenAI OAuth to show usage limits",
+                "尚未连接服务商",
+                "通过 OAuth 登录 Claude 或 OpenAI 后查看限额",
                 UsageOverlayStatus::Info,
                 vec![
-                    "## No usage sources found".to_string(),
-                    "• No providers with OAuth credentials were found.".to_string(),
-                    "• Use `/login claude` or `/login openai` to connect a provider.".to_string(),
-                    "• Then run `/usage` again.".to_string(),
+                    "## 未找到用量来源".to_string(),
+                    "• 尚未找到已通过 OAuth 登录的服务商。".to_string(),
+                    "• 使用 /login claude 或 /login openai 登录。".to_string(),
+                    "• 登录后再次执行 /usage。".to_string(),
                 ],
             ));
         }
@@ -239,9 +242,9 @@ impl UsageOverlay {
         }
 
         let title = if refreshing {
-            " Usage · refreshing "
+            " 用量 · 正在刷新 "
         } else {
-            " Usage "
+            " 用量 "
         };
         Self::new(title, items, summary)
     }
@@ -390,13 +393,13 @@ impl UsageOverlay {
             .title(format!(" {} ", self.title))
             .title_bottom(Line::from(vec![
                 hotkey(" Up/Down "),
-                Span::styled(" navigate  ", Style::default().fg(MUTED_DARK)),
-                hotkey(" type "),
-                Span::styled(" filter  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 移动  ", Style::default().fg(MUTED_DARK)),
+                hotkey(" 输入 "),
+                Span::styled(" 筛选  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" /usage "),
-                Span::styled(" refresh  ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 刷新  ", Style::default().fg(MUTED_DARK)),
                 hotkey(" Esc "),
-                Span::styled(" clear / close ", Style::default().fg(MUTED_DARK)),
+                Span::styled(" 清空/关闭 ", Style::default().fg(MUTED_DARK)),
             ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(PANEL_BORDER));
@@ -428,9 +431,9 @@ impl UsageOverlay {
         self.render_detail_pane(frame, body[1]);
 
         let footer = Paragraph::new(Line::from(vec![
-            Span::styled("Focus ", Style::default().fg(MUTED_DARK)),
+            Span::styled("焦点 ", Style::default().fg(MUTED_DARK)),
             Span::styled(
-                "Use this panel to compare provider headroom and reset times without cluttering the chat transcript.",
+                "在此比较各服务商的剩余额度和重置时间。",
                 Style::default().fg(MUTED),
             ),
         ]));
@@ -440,7 +443,7 @@ impl UsageOverlay {
     fn render_header(&self, frame: &mut Frame, area: Rect) {
         let block = Block::default()
             .title(Span::styled(
-                " Usage overview ",
+                " 用量概览 ",
                 Style::default().fg(Color::White).bold(),
             ))
             .borders(Borders::ALL)
@@ -451,10 +454,10 @@ impl UsageOverlay {
 
         let lines = vec![
             Line::from(vec![
-                Span::styled("Filter ", Style::default().fg(MUTED_DARK)),
+                Span::styled("筛选 ", Style::default().fg(MUTED_DARK)),
                 Span::styled(
                     if self.filter.is_empty() {
-                        "type provider or plan name".to_string()
+                        "输入服务商或套餐名称".to_string()
                     } else {
                         self.filter.clone()
                     },
@@ -465,7 +468,7 @@ impl UsageOverlay {
                     },
                 ),
                 Span::styled(
-                    format!("  ·  {} results", self.filtered.len()),
+                    format!("  ·  {} 项结果", self.filtered.len()),
                     Style::default().fg(MUTED_DARK),
                 ),
             ]),
@@ -494,7 +497,7 @@ impl UsageOverlay {
                     Color::Rgb(232, 134, 134),
                 ),
                 if self.summary.session_visible {
-                    Span::styled("  · session included", Style::default().fg(MUTED_DARK))
+                    Span::styled("  · 包含会话用量", Style::default().fg(MUTED_DARK))
                 } else {
                     Span::raw("")
                 },
@@ -506,9 +509,9 @@ impl UsageOverlay {
 
     fn render_item_list(&self, frame: &mut Frame, area: Rect) {
         let title = if self.filtered.is_empty() {
-            " Sources ".to_string()
+            " 来源 ".to_string()
         } else {
-            format!(" Sources ({}/{}) ", self.selected + 1, self.filtered.len())
+            format!(" 来源（{}/{}）", self.selected + 1, self.filtered.len())
         };
         let block = Block::default()
             .title(Span::styled(
@@ -523,7 +526,7 @@ impl UsageOverlay {
 
         if self.filtered.is_empty() {
             frame.render_widget(
-                Paragraph::new("No usage items match the current filter.")
+                Paragraph::new("没有匹配的用量条目。")
                     .style(Style::default().fg(MUTED))
                     .wrap(Wrap { trim: false }),
                 inner,
@@ -568,7 +571,10 @@ impl UsageOverlay {
                     title_style,
                 ),
                 Span::raw(" "),
-                Span::styled(format!("[{}]", item.status.label()), badge_style),
+                Span::styled(
+                    format!("[{}]", item.status.label_for_display()),
+                    badge_style,
+                ),
             ]));
             lines.push(Line::from(Span::styled(
                 format!("   {}", item.subtitle),
@@ -590,8 +596,8 @@ impl UsageOverlay {
     fn render_detail_pane(&self, frame: &mut Frame, area: Rect) {
         let selected = self.selected_item();
         let title = selected
-            .map(|item| format!(" {} · {} ", item.title, item.status.label()))
-            .unwrap_or_else(|| " Usage details ".to_string());
+            .map(|item| format!(" {} · {} ", item.title, item.status.label_for_display()))
+            .unwrap_or_else(|| " 用量详情 ".to_string());
         let border_color = selected
             .map(|item| item.status.color())
             .unwrap_or(PANEL_BORDER_ACTIVE);
@@ -629,7 +635,7 @@ impl UsageOverlay {
                 })
                 .collect(),
             None => vec![Line::from(Span::styled(
-                "No usage item selected.",
+                "尚未选择用量条目。",
                 Style::default().fg(MUTED),
             ))],
         };
@@ -700,7 +706,7 @@ fn provider_subtitle(report: &jcode_usage_types::ProviderUsage) -> String {
         return truncate_with_ellipsis(error, 72);
     }
     if report.hard_limit_reached {
-        return "Hard limit reached".to_string();
+        return "已达到使用上限".to_string();
     }
     let mut parts = Vec::new();
     if let Some(limit) = report
@@ -709,12 +715,12 @@ fn provider_subtitle(report: &jcode_usage_types::ProviderUsage) -> String {
         .max_by(|a, b| a.usage_percent.total_cmp(&b.usage_percent))
     {
         let mut part = format!(
-            "{} {:.0}% used",
+            "{} 已使用 {:.0}%",
             limit.name,
             limit.usage_percent.clamp(0.0, 999.0)
         );
         if let Some(reset) = limit.resets_at.as_deref() {
-            part.push_str(&format!(" · resets in {}", format_reset_time(reset)));
+            part.push_str(&format!(" · {} 后重置", format_reset_time(reset)));
         }
         parts.push(part);
     }
@@ -722,7 +728,7 @@ fn provider_subtitle(report: &jcode_usage_types::ProviderUsage) -> String {
         parts.push(format!("{}: {}", key, value));
     }
     if parts.is_empty() {
-        "No usage data available".to_string()
+        "暂无用量数据".to_string()
     } else {
         truncate_with_ellipsis(&parts.join(" · "), 96)
     }
@@ -782,36 +788,34 @@ pub fn format_usage_bar(percent: f32, width: usize) -> String {
 
 fn provider_detail_lines(report: &jcode_usage_types::ProviderUsage) -> Vec<String> {
     let mut lines = Vec::new();
-    lines.push("## Status".to_string());
+    lines.push("## 状态".to_string());
     if let Some(error) = &report.error {
-        lines.push(format!("• Error: {}", error));
+        lines.push(format!("• 错误：{}", error));
         lines.push("".to_string());
-        lines.push("## Next steps".to_string());
-        lines.push(
-            "• Re-run `/usage` to retry after credentials or network issues are fixed.".to_string(),
-        );
+        lines.push("## 后续操作".to_string());
+        lines.push("• 修复登录或网络问题后，再次执行 /usage 重试。".to_string());
         if report.provider_name.to_lowercase().contains("openai") {
-            lines.push("• Use `/login openai` if the token needs refreshing.".to_string());
+            lines.push("• 使用 /login openai 刷新登录。".to_string());
         } else if report.provider_name.to_lowercase().contains("anthropic")
             || report.provider_name.to_lowercase().contains("claude")
         {
-            lines.push("• Use `/login claude` if the token needs refreshing.".to_string());
+            lines.push("• 使用 /login claude 刷新登录。".to_string());
         }
         return lines;
     }
 
-    lines.push(format!("• {}", provider_status(report).label()));
+    lines.push(format!("• {}", provider_status(report).label_for_display()));
     if report.hard_limit_reached {
-        lines.push("• Hard limit reached.".to_string());
+        lines.push("• 已达到使用上限。".to_string());
     }
 
     if !report.limits.is_empty() {
         lines.push("".to_string());
-        lines.push("## Limits".to_string());
+        lines.push("## 限额".to_string());
         let name_width = report
             .limits
             .iter()
-            .map(|limit| limit.name.chars().count())
+            .map(|limit| unicode_width::UnicodeWidthStr::width(limit.name.as_str()))
             .max()
             .unwrap_or(0);
         for limit in &report.limits {
@@ -819,45 +823,57 @@ fn provider_detail_lines(report: &jcode_usage_types::ProviderUsage) -> Vec<Strin
                 .resets_at
                 .as_deref()
                 .map(format_reset_time)
-                .map(|value| format!(" · resets in {}", value))
+                .map(|value| format!(" · {} 后重置", value))
                 .unwrap_or_default();
             lines.push(format!(
-                "• {:<width$} {}{}",
+                "• {}{} {}{}",
                 limit.name,
+                " ".repeat(
+                    name_width
+                        .saturating_sub(unicode_width::UnicodeWidthStr::width(limit.name.as_str()))
+                ),
                 format_usage_bar(limit.usage_percent, 18),
                 reset,
-                width = name_width
             ));
         }
     }
 
     if !report.extra_info.is_empty() {
         lines.push("".to_string());
-        lines.push("## Details".to_string());
+        lines.push("## 详情".to_string());
         for (key, value) in &report.extra_info {
             lines.push(format!("• {}: {}", key, value));
         }
     }
 
     if report.limits.is_empty() && report.extra_info.is_empty() {
-        lines.push("• No usage data available from this provider.".to_string());
+        lines.push("• 此服务商未提供用量数据。".to_string());
     }
 
     lines
 }
 
 fn truncate_with_ellipsis(input: &str, width: usize) -> String {
+    use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
     if width == 0 {
         return String::new();
     }
-    let chars: Vec<char> = input.chars().collect();
-    if chars.len() <= width {
+    if input.width() <= width {
         return input.to_string();
     }
     if width <= 3 {
         return ".".repeat(width);
     }
-    let mut out: String = chars.into_iter().take(width - 3).collect();
+    let mut out = String::new();
+    let mut used = 0;
+    for ch in input.chars() {
+        let cells = ch.width().unwrap_or(0);
+        if used + cells > width - 3 {
+            break;
+        }
+        out.push(ch);
+        used += cells;
+    }
     out.push_str("...");
     out
 }
@@ -887,7 +903,7 @@ mod tests {
 
     #[test]
     fn status_labels_match_display_copy() {
-        assert_eq!(UsageOverlayStatus::Good.label_for_display(), "healthy");
+        assert_eq!(UsageOverlayStatus::Good.label_for_display(), "正常");
         assert_eq!(UsageOverlayStatus::Critical.icon(), "◆");
     }
 
@@ -930,7 +946,7 @@ mod tests {
 
         assert_eq!(overlay.selected_item_title(), Some("Claude"));
         let details = overlay.selected_item_detail_text();
-        assert!(details.contains("## Limits"));
+        assert!(details.contains("## 限额"));
         assert!(details.contains("5h"));
         assert!(details.contains("now"));
     }

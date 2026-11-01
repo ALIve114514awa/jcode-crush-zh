@@ -184,7 +184,7 @@ pub(super) async fn handle_tick(app: &mut App, remote: &mut RemoteConnection) ->
                     let show_brief = request.show_brief;
                     app.begin_in_flight_catchup_resume(request);
                     app.set_status_notice(if show_brief {
-                        format!("Catch Up → {}", label)
+                        format!("会话摘要 → {}", label)
                     } else {
                         format!("Back → {}", label)
                     });
@@ -473,7 +473,7 @@ async fn apply_terminal_event<B: Backend>(
                                 "Failed to request model switch: {}",
                                 error
                             )));
-                            app.set_status_notice("Model switch failed");
+                            app.set_status_notice("模型切换失败");
                         }
                     }
                 } else if let Some(spec) = app.pending_model_switch.take() {
@@ -488,7 +488,7 @@ async fn apply_terminal_event<B: Backend>(
                                 "Failed to request model switch: {}",
                                 error
                             )));
-                            app.set_status_notice("Model switch failed");
+                            app.set_status_notice("模型切换失败");
                         }
                     }
                 }
@@ -542,7 +542,7 @@ async fn apply_terminal_event<B: Backend>(
                                     }
                                 }
                                 _ => app.push_display_message(DisplayMessage::error(format!(
-                                    "Provider `{}` does not support account switching.",
+                                    "服务商 `{}` 不支持切换账户。",
                                     provider_id
                                 ))),
                             }
@@ -1161,7 +1161,7 @@ async fn recover_stuck_remote_history(app: &mut App, remote: &mut RemoteConnecti
                  This usually clears on its own; if it persists, run /restart to reconnect."
                     .to_string(),
             ));
-            app.set_status_notice("Session history not loading - try /restart");
+            app.set_status_notice("会话历史未能加载，请尝试 /restart");
             // Clear last_attempt so we don't repeat the message every tick, but
             // keep attempts at max so we don't re-enter the retry path.
             app.remote_history_recovery_last_attempt = None;
@@ -1188,7 +1188,7 @@ async fn recover_stuck_remote_history(app: &mut App, remote: &mut RemoteConnecti
     ));
     match remote.request_history().await {
         Ok(_) => {
-            app.set_status_notice("Loading session… re-requesting history");
+            app.set_status_notice("正在加载会话…重新请求历史");
         }
         Err(err) => {
             crate::logging::error(&format!(

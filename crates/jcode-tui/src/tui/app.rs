@@ -470,11 +470,11 @@ pub(crate) enum RemoteStartupPhase {
 impl RemoteStartupPhase {
     pub(crate) fn header_label(&self) -> String {
         match self {
-            Self::StartingServer => "starting server…".to_string(),
-            Self::Connecting => "connecting to server…".to_string(),
-            Self::LoadingSession => "loading session…".to_string(),
-            Self::WaitingForReload => "waiting for reload…".to_string(),
-            Self::Reconnecting { attempt } => format!("reconnecting ({attempt})…"),
+            Self::StartingServer => "正在启动服务器…".to_string(),
+            Self::Connecting => "正在连接服务器…".to_string(),
+            Self::LoadingSession => "正在加载会话…".to_string(),
+            Self::WaitingForReload => "正在等待重新加载…".to_string(),
+            Self::Reconnecting { attempt } => format!("正在重新连接（{attempt}）…"),
         }
     }
 
