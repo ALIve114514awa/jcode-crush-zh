@@ -42,7 +42,8 @@ try {
         & $taskExe --no-update --no-selfdev server stop --force
         $taskCode = $LASTEXITCODE
     } else {
-        & $taskNode (Join-Path $taskRoot 'tools\runtime\configure-portable.mjs') $taskRoot
+        # A pipeline makes Windows PowerShell wait for the silent native process.
+        & $taskNode (Join-Path $taskRoot 'tools\runtime\configure-portable.mjs') $taskRoot | Out-Null
         if ($LASTEXITCODE -ne 0) { throw 'Portable configuration preparation failed.' }
         if (-not $ProjectPath) { $ProjectPath = Join-Path $taskRoot 'Projects' }
         if (-not (Test-Path -LiteralPath $ProjectPath -PathType Container)) { throw "Project directory not found: $ProjectPath" }
