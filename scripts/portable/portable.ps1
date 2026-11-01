@@ -27,7 +27,8 @@ try {
     } finally { $taskSha.Dispose() }
     $env:JCODE_HOME = $taskData
     $env:JCODE_RUNTIME_DIR = Join-Path $taskData "runtime\$taskHostId"
-    $env:JCODE_SOCKET = "\\.\pipe\jcode-portable-$taskInstanceId"
+    # The server derives its separate debug endpoint from the .sock suffix.
+    $env:JCODE_SOCKET = "\\.\pipe\jcode-portable-$taskInstanceId.sock"
     $env:JCODE_INSTALL_DIR = Join-Path $taskRoot 'bin'
     $env:JCODE_NODE_BINARY = $taskNode
     $env:JCODE_MCP_REMOTE_BRIDGE = $taskAdapter
