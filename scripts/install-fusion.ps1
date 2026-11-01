@@ -9,7 +9,7 @@ The runtime is prepared with npm ci --ignore-scripts in scripts/fusion-runtime.
 #>
 param(
     [Parameter(Mandatory = $true)][string]$ArtifactExePath,
-    [string]$Version = 'v0.94.0-crush.2.zhCN',
+    [string]$Version = 'v0.94.0-crush.3.zhCN',
     [string]$NodePath,
     [string]$RuntimePath = (Join-Path $PSScriptRoot 'fusion-runtime'),
     [string]$RuntimeDllDir,

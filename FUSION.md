@@ -1,6 +1,13 @@
 # JCode LSP / 远程 MCP 集成版
 
-当前中文版本为 `0.94.0-crush.2.zhCN`。中文使用入口和汉化范围见 [README.zh-CN.md](README.zh-CN.md)。
+当前中文版本为 `0.94.0-crush.3.zhCN`。中文使用入口和汉化范围见 [README.zh-CN.md](README.zh-CN.md)。
+
+Windows 便携打包：`scripts/package-portable.ps1 -ArtifactExePath target/selfdev/jcode.exe -DestinationPath E:\JCode-Portable`。
+运行时默认从现有安装目录复用固定依赖，也可用 `-RuntimeRoot` 指定完整的集成版目录。
+默认迁移现有 JCode 资料，`-SkipProfileMigration` 可创建全新资料包。已有目标目录会被拒绝，避免覆盖便携资料。
+启动器以包内 `data` 为 `JCODE_HOME`，每台电脑使用独立运行目录和服务器管道，
+通过 `JCODE_NODE_BINARY`（必须是现有绝对文件路径）及 `JCODE_MCP_REMOTE_BRIDGE` 指向随包运行时。
+详细使用说明见 [便携版说明](scripts/portable/README.zh-CN.md)。
 
 此分支基于 JCode `2a9e7f62481bd198685153051336051a731d86de`，沿用 JCode 的 TUI、模型接入、会话和工具执行机制，加入 LSP 查询与远程 MCP。Crush 作为功能设计参考，没有复制其源码。完整 Crush 界面和 LSP 跨文件重构不属于本版。
 

@@ -1,6 +1,6 @@
 [package]
 name = "jcode"
-version = "0.94.0-crush.2.zhCN"
+version = "0.94.0-crush.3.zhCN"
 description = "Possibly the greatest coding agent ever built — blazing-fast TUI, multi-model, swarm coordination, 30+ tools"
 edition = "2024"
 autobins = false

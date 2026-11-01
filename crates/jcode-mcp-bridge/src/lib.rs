@@ -1,7 +1,10 @@
 //! Launch descriptions for the pinned remote MCP adapter bundled by the installer.
 //! Configured header values travel in the environment, not in process arguments.
 use anyhow::{Context, Result, bail};
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use url::Url;
 
 pub const ADAPTER_VERSION: &str = "0.15.1";
@@ -10,6 +13,19 @@ pub const ADAPTER_VERSION: &str = "0.15.1";
 pub struct Launch {
     pub args: Vec<String>,
     pub env: HashMap<String, String>,
+}
+
+/// An explicit portable runtime must never silently fall back to the host Node.
+pub fn node_command(explicit: Option<PathBuf>, bundled: Option<PathBuf>) -> Result<PathBuf> {
+    if let Some(path) = explicit {
+        if !path.is_absolute() || !path.is_file() {
+            bail!("JCODE_NODE_BINARY must point to an existing absolute Node executable path");
+        }
+        return Ok(path);
+    }
+    Ok(bundled
+        .filter(|path| path.is_file())
+        .unwrap_or_else(|| "node".into()))
 }
 
 pub fn supported_remote(transport: Option<&str>, endpoint: Option<&str>) -> bool {
@@ -90,6 +106,30 @@ pub fn launch(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn portable_node_overrides_host_and_rejects_missing_or_relative_paths() {
+        let directory = tempfile::tempdir().unwrap();
+        let portable = directory.path().join("中文 runtime").join("node.exe");
+        std::fs::create_dir_all(portable.parent().unwrap()).unwrap();
+        std::fs::write(&portable, b"fixture").unwrap();
+        let host = directory.path().join("host-node.exe");
+        std::fs::write(&host, b"fixture").unwrap();
+        assert_eq!(
+            node_command(Some(portable.clone()), Some(host.clone())).unwrap(),
+            portable
+        );
+        assert!(
+            node_command(
+                Some(directory.path().join("missing.exe")),
+                Some(host.clone())
+            )
+            .is_err()
+        );
+        assert!(node_command(Some("node.exe".into()), Some(host.clone())).is_err());
+        assert_eq!(node_command(None, Some(host.clone())).unwrap(), host);
+        assert_eq!(node_command(None, None).unwrap(), PathBuf::from("node"));
+    }
 
     #[test]
     fn remote_configs_validate_url_and_transport() {

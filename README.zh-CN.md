@@ -13,6 +13,11 @@
 
 ## Windows 使用
 
+需要放到 U 盘时，可用 `scripts/package-portable.ps1` 打包 Windows x64 便携版。
+包内的“启动 JCode.cmd”会将配置、登录、会话和日志保存到旁边的 `data`，
+并随盘符变化重新定位内置工具。默认项目目录为 `Projects`，也支持将项目文件夹
+拖到启动入口上。详细说明见 [便携版使用说明](scripts/portable/README.zh-CN.md)。
+
 默认入口：`%LOCALAPPDATA%\jcode\bin\jcode.exe`。安装后在开始菜单打开 **JCode**，或重新打开终端：
 
 ```powershell

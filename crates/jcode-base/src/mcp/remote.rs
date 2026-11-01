@@ -20,10 +20,12 @@ pub(super) fn bridge_config(config: &McpServerConfig) -> Result<McpServerConfig>
     )?;
     let mut stdio = config.clone();
     let bundled_node = dirs::data_local_dir().map(|dir| dir.join("jcode/tools/node/node.exe"));
-    stdio.command = bundled_node
-        .filter(|path| path.is_file())
-        .map(|path| path.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "node".into());
+    stdio.command = jcode_mcp_bridge::node_command(
+        std::env::var_os("JCODE_NODE_BINARY").map(PathBuf::from),
+        bundled_node,
+    )?
+    .to_string_lossy()
+    .into_owned();
     stdio.args = launch.args;
     stdio.env.extend(launch.env);
     let auth_dir = crate::storage::jcode_dir()?.join("mcp-auth");
