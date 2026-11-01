@@ -906,7 +906,7 @@ mod tests {
                         "/account openai settings".into(),
                     ),
                     (
-                        "Today (local midnight)".into(),
+                        "今日（本地零点起）".into(),
                         "123456789 input / 450000 output tokens (60000 cached input), $1.2500 known + unknown cost (2 unpriced responses) API-equivalent estimate, not a bill; recorded only; partial token counts; since local midnight"
                             .into(),
                     ),
@@ -938,7 +938,7 @@ mod tests {
             "$12.50",
             "1234567890 input",
             "600000 cached input",
-            "Not your subscription bill.",
+            "不是订阅账单。",
             "/account openai settings",
         ] {
             assert!(
